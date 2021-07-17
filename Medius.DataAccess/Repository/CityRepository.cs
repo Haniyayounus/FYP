@@ -39,5 +39,10 @@ namespace Medius.DataAccess.Repository
             await _db.Cities.AddAsync(entity);
             return entity;
         }
+        public async Task<City> GetCity(int id)
+        {
+            var objFromDb = _db.Cities.FirstOrDefault(s => s.Id == id) ?? throw new Exception($"No City found against id:'{id}'");
+            return objFromDb;
+        }
     }
 }
