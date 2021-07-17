@@ -70,10 +70,11 @@ namespace Medius.DataAccess.Repository.IRepository
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task RemoveAsync(int id)
+        public async Task<T> RemoveAsync(int id)
         {
             T entity = await dbSet.FindAsync(id);
             await RemoveAsync(entity);
+            return entity;
         }
 
         public async Task RemoveAsync(T entity)

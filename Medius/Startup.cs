@@ -1,6 +1,7 @@
 using Medius.DataAccess.Data;
 using Medius.DataAccess.Repository;
 using Medius.DataAccess.Repository.IRepository;
+using Medius.Utility;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -14,6 +15,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
+using Microsoft.Owin.Security.Google;
+using Microsoft.Owin.Security.OAuth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +26,11 @@ namespace Medius
 {
     public class Startup
     {
+        public static OAuthAuthorizationServerOptions OAuthOptions { get; private set; }
+
+        public static string PublicClientId { get; private set; }
+        public static OAuthBearerAuthenticationOptions OAuthBearerOptions { get; private set; }
+        // For more information on configuring authentication, please visit http://go.microsoft.com/fwlink/?LinkId=301864
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -45,7 +53,6 @@ namespace Medius
 
             //repositories connection
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-
 
             services.AddSwaggerGen(c =>
             {
@@ -74,6 +81,47 @@ namespace Medius
             {
                 endpoints.MapControllers();
             });
+            // This is a key step of the solution as we need to supply a meaningful and fully working
+            // implementation of the OAuthBearerOptions object when we configure the OAuth Bearer authentication mechanism. 
+            // The trick here is to reuse the previously defined OAuthOptions object that already
+            // implements almost everything we need
+            //OAuthBearerOptions =
+            //    new OAuthBearerAuthenticationOptions
+            //    {
+            //        AccessTokenFormat = OAuthOptions.AccessTokenFormat,
+            //        AccessTokenProvider = OAuthOptions.AccessTokenProvider,
+            //        AuthenticationMode = OAuthOptions.AuthenticationMode,
+            //        AuthenticationType = OAuthOptions.AuthenticationType,
+            //        Description = OAuthOptions.Description,
+            //        Provider = new CustomBearerAuthenticationProvider(),
+            //        SystemClock = OAuthOptions.SystemClock,
+            //    };
+
+            // The provider is the only object we need to redefine. See below for the implementation
+
+
+            // Uncomment the following lines to enable logging in with third party login providers
+            //app.UseMicrosoftAccountAuthentication(
+            //    clientId: "",
+            //    clientSecret: "");
+
+            //app.UseTwitterAuthentication(
+            //    consumerKey: "",
+            //    consumerSecret: "");
+
+            
+        }
+        public class CustomBearerAuthenticationProvider : OAuthBearerAuthenticationProvider
+        {
+            // This validates the identity based on the issuer of the claim.
+            // The issuer is set in the API endpoint that logs the user in
+            public override Task ValidateIdentity(OAuthValidateIdentityContext context)
+            {
+                var claims = context.Ticket.Identity.Claims;
+                if (claims.Count() == 0 || claims.Any(claim => claim.Issuer != "Facebook" && claim.Issuer != "LOCAL_AUTHORITY"))
+                    context.Rejected();
+                return Task.FromResult<object>(null);
+            }
         }
     }
 }

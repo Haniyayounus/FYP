@@ -21,7 +21,7 @@ namespace Medius.DataAccess.Repository.IRepository
             string includeProperties = null
             );
 
-        Task RemoveAsync(int id);
+        Task<T> RemoveAsync(int id);
         Task RemoveAsync(T entity);
         Task RemoveRangeAsync(IEnumerable<T> entity);
 

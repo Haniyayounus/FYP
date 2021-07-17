@@ -7,6 +7,7 @@ namespace Medius.DataAccess.Repository.IRepository
     {
         Task<City> AddAsync(City entity);
         Task<City> Update(City city);
+        Task<City> GetCity(int id);
         Task<bool> IsCityDuplicate(string name);
         Task<bool> IsCityDuplicate(int id, string name);
     }
