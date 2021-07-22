@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace Medius.DataAccess.Repository.IRepository
 {
-    public interface IClaimRepository : IRepositoryAsync<Claim>
+    public interface IClaimRepository : IRepositoryAsync<Claims>
     {
-        Task<Claim> AddAsync(Claim entity);
-        Task<Claim> Update(Claim claim);
+        Task<Claims> AddAsync(Claims entity);
+        Task<Claims> Update(Claims claim);
         Task<bool> IsClaimDuplicate(string desc);
         Task<bool> IsClaimDuplicate(int id, string desc);
     }

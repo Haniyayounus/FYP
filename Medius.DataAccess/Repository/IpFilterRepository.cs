@@ -1,8 +1,10 @@
 ﻿using Medius.DataAccess.Data;
 using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
+using Medius.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -38,6 +40,23 @@ namespace Medius.DataAccess.Repository
             if (await IsIpFilterDuplicate(entity.Name)) throw new Exception($"'{entity.Name}' already exists. Please choose a different name.");
             await _db.IpFilters.AddAsync(entity);
             return entity;
+        }
+
+        public async Task<List<IpFilter>> GetIpFilterByType(FilterType filterType)
+        {
+            return await _db.IpFilters.Where(x => x.Type == filterType && x.IsActive).AsNoTracking().ToListAsync();
+        }
+
+        public async Task<List<IpFilter>> GetAllTechnology()
+        {
+            return await _db.IpFilters.Where(x => x.Type == FilterType.Technology && x.IsActive).AsNoTracking().ToListAsync();
+
+        }
+
+        public async Task<List<IpFilter>> GetAllCategory()
+        {
+            return await _db.IpFilters.Where(x => x.Type == FilterType.Category && x.IsActive).AsNoTracking().ToListAsync();
+
         }
     }
 }

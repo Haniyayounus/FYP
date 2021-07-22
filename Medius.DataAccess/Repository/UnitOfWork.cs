@@ -15,6 +15,7 @@ namespace Medius.DataAccess.Repository
             FAQ = new FAQRepository(_db);
             IpFilter = new IpFilterRepository(_db);
             ApplicationUser = new ApplicationUserRepository(_db);
+            Case = new CaseRepository(_db);
         }
 
         public ICityRepository City { get; private set; }
@@ -22,6 +23,7 @@ namespace Medius.DataAccess.Repository
         public IFAQRepository FAQ { get; private set; }
         public IIpFilterRepository IpFilter { get; private set; }
         public IApplicationUserRepository ApplicationUser { get; private set; }
+        public ICaseRepository Case { get; set; }
 
         public void Dispose()
         {

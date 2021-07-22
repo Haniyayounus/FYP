@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Medius.Controllers
@@ -31,14 +32,14 @@ namespace Medius.Controllers
         }
 
         [HttpPost, Route("api/ProfilePicture/UploadProfileImage/")]
-        public IActionResult UploadProfileImage(string email, IFormFile file)
+        public async Task<IActionResult> UploadProfileImage(string email, IFormFile file)
         {
             //get user by email
             var user = _db.Users.FirstOrDefault(m => m.Email == email);
 
             if (user != null && file.Length > 0)
             {
-                string folderpath = "/Content/ProfileImages/";
+                string folderpath = Path.Combine(_env.WebRootPath, "ProfileImages");
                 FileUtility.CreateFileFolder(folderpath);
 
                 var date = DateTime.Now;
@@ -60,38 +61,41 @@ namespace Medius.Controllers
 
                 string filePath = Path.Combine(_env.ContentRootPath, folderpath, imageName + ".png");
 
-               // delete previous image
-               // if (!string.IsNullOrEmpty(user.ImagePath) && File.Exists(AppDomain.CurrentDomain.BaseDirectory + user.ImagePath))
-               // {
-               //     try
-               //     {
-               //         var path = AppDomain.CurrentDomain.BaseDirectory + user.ImagePath;
-               //         //File.Delete(path);
-               //     }
-               //     catch (Exception ex)
-               //     {
-               //         var error = new
-               //         {
-               //             message = ex.Message,
-               //             error = ModelState.Values.SelectMany(e => e.Errors.Select(er => er.ErrorMessage))
-               //         };
-               //         return StatusCode(StatusCodes.Status400BadRequest, error);
-               //     }
-               // }
-               //// delete image if it exist with the same name
-               // if (File.Exists(filePath))
-               // {
-               //     File.Delete(filePath);
-               // }
+                //delete previous image
+                if (!string.IsNullOrEmpty(user.ImagePath) && System.IO.File.Exists(AppDomain.CurrentDomain.BaseDirectory + user.ImagePath))
+                {
+                    try
+                    {
+                        var path = AppDomain.CurrentDomain.BaseDirectory + user.ImagePath;
+                        System.IO.File.Delete(path);
+                    }
+                    catch (Exception ex)
+                    {
+                        var error = new
+                        {
+                            message = ex.Message,
+                            error = ModelState.Values.SelectMany(e => e.Errors.Select(er => er.ErrorMessage))
+                        };
+                        return StatusCode(StatusCodes.Status400BadRequest, error);
+                    }
+                }
+                // delete image if it exist with the same name
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+                // convert string to stream
+                byte[] byteArray = Encoding.UTF8.GetBytes(filePath);
+                //byte[] byteArray = Encoding.ASCII.GetBytes(contents);
+                MemoryStream stream = new MemoryStream(byteArray);
+                await file.CopyToAsync(stream);
 
-               // file.SaveAs(filePath);
-
-               // if (user != null)
-               // {
-               //     user.ImagePath = folderpath + imageName + ".png";
-               //     _db.Entry(user).State = EntityState.Modified;
-               //     _db.SaveChanges();
-               // }
+                if (user != null)
+                {
+                    user.ImagePath = folderpath + imageName + ".png";
+                    _db.Entry(user).State = EntityState.Modified;
+                    _db.SaveChanges();
+                }
             }
             return StatusCode(StatusCodes.Status200OK);
         }

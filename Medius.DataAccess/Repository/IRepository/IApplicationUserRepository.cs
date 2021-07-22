@@ -1,13 +1,11 @@
 ﻿using Medius.Model;
+using System;
 using System.Threading.Tasks;
 
 namespace Medius.DataAccess.Repository.IRepository
 {
-    public interface IApplicationUserRepository : IRepositoryAsync<ApplicationUser>
+    public interface IApplicationUserRepository : IRepository<ApplicationUser>
     {
-        //Task<ApplicationUser> AddAsync(ApplicationUser entity);
-        //Task<ApplicationUser> Update(ApplicationUser city);
-        //Task<bool> IsApplicationUserDuplicate(string name);
-        //Task<bool> IsApplicationUserDuplicate(int id, string name);
+
     }
 }

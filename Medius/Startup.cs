@@ -2,23 +2,16 @@ using Medius.DataAccess.Data;
 using Medius.DataAccess.Repository;
 using Medius.DataAccess.Repository.IRepository;
 using Medius.Utility;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-using Microsoft.Owin.Security.Google;
 using Microsoft.Owin.Security.OAuth;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -43,17 +36,54 @@ namespace Medius
         {
             services.AddControllers();
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
+            services.AddCors(options => options.AddDefaultPolicy(
+                builder => builder.AllowAnyOrigin()));
 
+            services
+         .AddAuthentication(options =>
+         {
+             options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+         })
+         .AddCookie(options =>
+         {
+            // Change the options as needed
+        });
             //db connection
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
+
+            //     services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            //.AddEntityFrameworkStores<ApplicationDbContext>();
+
+            services.Configure<EmailOptions>(Configuration);
+            services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
+            services.Configure<BrainTreeSettings>(Configuration.GetSection("BrainTree"));
+            services.Configure<TwilioSettings>(Configuration.GetSection("Twilio"));
+            services.AddSingleton<IBrainTreeGate, BrainTreeGate>();
             //repositories connection
+
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+            services.AddRazorPages();
+            services.ConfigureApplicationCookie(options =>
+            {
+                // Cookie settings
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+
+                options.LoginPath = $"/Identity/Account/Login";
+                options.LogoutPath = $"/Identity/Account/Logout";
+                options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+                options.SlidingExpiration = true;
+            });
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Medius", Version = "v1" });
@@ -71,9 +101,10 @@ namespace Medius
             }
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseCors();
             app.UseAuthentication();
             app.UseAuthorization();
 
@@ -85,17 +116,17 @@ namespace Medius
             // implementation of the OAuthBearerOptions object when we configure the OAuth Bearer authentication mechanism. 
             // The trick here is to reuse the previously defined OAuthOptions object that already
             // implements almost everything we need
-            //OAuthBearerOptions =
-            //    new OAuthBearerAuthenticationOptions
-            //    {
-            //        AccessTokenFormat = OAuthOptions.AccessTokenFormat,
-            //        AccessTokenProvider = OAuthOptions.AccessTokenProvider,
-            //        AuthenticationMode = OAuthOptions.AuthenticationMode,
-            //        AuthenticationType = OAuthOptions.AuthenticationType,
-            //        Description = OAuthOptions.Description,
-            //        Provider = new CustomBearerAuthenticationProvider(),
-            //        SystemClock = OAuthOptions.SystemClock,
-            //    };
+            OAuthBearerOptions =
+                new OAuthBearerAuthenticationOptions
+                {
+                    AccessTokenFormat = OAuthOptions.AccessTokenFormat,
+                    AccessTokenProvider = OAuthOptions.AccessTokenProvider,
+                    AuthenticationMode = OAuthOptions.AuthenticationMode,
+                    AuthenticationType = OAuthOptions.AuthenticationType,
+                    Description = OAuthOptions.Description,
+                    Provider = new CustomBearerAuthenticationProvider(),
+                    SystemClock = OAuthOptions.SystemClock,
+                };
 
             // The provider is the only object we need to redefine. See below for the implementation
 
@@ -109,7 +140,7 @@ namespace Medius
             //    consumerKey: "",
             //    consumerSecret: "");
 
-            
+
         }
         public class CustomBearerAuthenticationProvider : OAuthBearerAuthenticationProvider
         {

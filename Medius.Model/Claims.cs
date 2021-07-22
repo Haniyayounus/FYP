@@ -2,7 +2,7 @@
 
 namespace Medius.Model
 {
-    public class Claim : BaseEntity<int>
+    public class Claims : BaseEntity<int>
     {
         [Key]
         public override int Id { get; set; }
