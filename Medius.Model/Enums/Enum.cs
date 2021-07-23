@@ -22,15 +22,20 @@ namespace Medius.Models.Enums
 
     public enum Status
     {
-        Draft = 1,
-        Pending = 2,
-        Reject = 3,
-        Publish = 4
+        Draft,
+        Pending,
+        Reject,
+        Publish
     }
 
     public enum ModeofRegistration
     {
         Fast = 1,
         Normal = 2
+    }
+    public enum Role
+    {
+        Admin,
+        User
     }
 }

@@ -14,13 +14,13 @@ namespace Medius.ViewComponents
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
-        {
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
-            var userFromDb = _unitOfWork.ApplicationUser.GetFirstOrDefault(u => u.Id == claims.Value);
+        //public async Task<IViewComponentResult> InvokeAsync()
+        //{
+        //    var claimsIdentity = (ClaimsIdentity)User.Identity;
+        //    var claims = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+        //    var userFromDb = _unitOfWork.ApplicationUser.GetFirstOrDefault(u => u.Id == claims.Value);
 
-            return View(userFromDb);
-        }
+        //    return View(userFromDb);
+        //}
     }
 }
