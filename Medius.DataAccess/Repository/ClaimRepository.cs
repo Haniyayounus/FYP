@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Medius.DataAccess.Repository
 {
-    public class ClaimRepository : RepositoryAsync<Claim>, IClaimRepository
+    public class ClaimRepository : RepositoryAsync<Claims>, IClaimRepository
     {
         private readonly ApplicationDbContext _db;
 
@@ -17,7 +17,7 @@ namespace Medius.DataAccess.Repository
             _db = db;
         }
 
-        public async Task<Claim> Update(Claim claim)
+        public async Task<Claims> Update(Claims claim)
         {
             var objFromDb = _db.Claims.FirstOrDefault(s => s.Id == claim.Id) ?? throw new Exception($"No claim found against id:'{claim.Id}'");
             if (claim.Id == 0) throw new Exception($"City id cant be null");
@@ -33,7 +33,7 @@ namespace Medius.DataAccess.Repository
         public Task<bool> IsClaimDuplicate(int id, string name)
              => _db.Claims.AnyAsync(x => x.Description.ToLower().Equals(name.ToLower()) && x.IsActive == true && !x.Id.Equals(id));
 
-        public async Task<Claim> AddAsync(Claim entity)
+        public async Task<Claims> AddAsync(Claims entity)
         {
             if (await IsClaimDuplicate(entity.Description)) throw new Exception($"'{entity.Description}' already exists. Please choose a different name.");
             await _db.Claims.AddAsync(entity);

@@ -1,10 +1,8 @@
 ﻿using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
+using Medius.Model.ViewModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Medius.Controllers
@@ -37,13 +35,13 @@ namespace Medius.Controllers
 
         [HttpPost]
         [Route("Add")]
-        public async Task<IActionResult> Add(string description)
+        public async Task<IActionResult> Add(ClaimViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                Claim claim = new Claim
+                Claims claim = new Claims
                 {
-                    Description = description
+                    Description = viewModel.Description
                 };
                 var data = await _unitOfWork.Claim.AddAsync(claim);
                 _unitOfWork.Save();
@@ -57,14 +55,14 @@ namespace Medius.Controllers
 
         [HttpPut]
         [Route("Update")]
-        public async Task<IActionResult> Update(int id, string description)
+        public async Task<IActionResult> Update(UpdateClaimViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                Claim claim = new Claim
+                Claims claim = new Claims
                 {
-                    Id = id,
-                    Description = description
+                    Id = viewModel.Id,
+                    Description = viewModel.Description
                 };
                 var data = await _unitOfWork.Claim.Update(claim);
                 _unitOfWork.Save();

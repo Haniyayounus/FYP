@@ -1,26 +1,27 @@
 using Medius.DataAccess.Data;
 using Medius.DataAccess.Repository;
 using Medius.DataAccess.Repository.IRepository;
+using Medius.Middleware;
 using Medius.Utility;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-using Microsoft.Owin.Security.Google;
 using Microsoft.Owin.Security.OAuth;
 using System;
-using System.Collections.Generic;
+using AutoMapper;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Server.IIS;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
+using System.Reflection;
 using System.Linq;
-using System.Threading.Tasks;
+using Castle.Core.Internal;
 
 namespace Medius
 {
@@ -29,7 +30,6 @@ namespace Medius
         public static OAuthAuthorizationServerOptions OAuthOptions { get; private set; }
 
         public static string PublicClientId { get; private set; }
-        public static OAuthBearerAuthenticationOptions OAuthBearerOptions { get; private set; }
         // For more information on configuring authentication, please visit http://go.microsoft.com/fwlink/?LinkId=301864
         public Startup(IConfiguration configuration)
         {
@@ -41,19 +41,67 @@ namespace Medius
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"));
-
+            // add services to the DI container
             //db connection
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
+            //cors 
+            services.AddCors();
 
-            //repositories connection
+            //controller
+            services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.IgnoreNullValues = true);
+
+            //services.AddCors(options => options.AddDefaultPolicy(
+            //    builder => builder.AllowAnyOrigin()));
+
+            //automapper
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            // configure DI for application services
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
+            services.AddScoped<EmailSender>();
 
+            //services.AddTransient<IClaimsTransformation, ClaimsTransformer>();
+            services.AddAuthentication(IISServerDefaults.AuthenticationScheme);
+            //services.AddTransient<IClaimsTransformation, ClaimsTransformer>();
+            services.Configure<IISServerOptions>(options =>
+            {
+                options.AutomaticAuthentication = false;
+            });
+
+            services.Configure<EmailOptions>(Configuration);
+            services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
+            services.Configure<BrainTreeSettings>(Configuration.GetSection("BrainTree"));
+            services.AddSingleton<IBrainTreeGate, BrainTreeGate>();
+            //Twilio Account
+            //var twilioSection =
+            //    Configuration.GetSection("Twilio");
+            //..
+            //services.AddDataProtection()
+            //    .PersistKeysToFileSystem(new System.IO.DirectoryInfo(@"./"))
+                /*.ProtectKeysWithCertificate(GetCertificate())*/
+
+            services.AddRazorPages();
+            //services.ConfigureApplicationCookie(options =>
+            //{
+            //    // Cookie settings
+            //    options.Cookie.HttpOnly = true;
+            //    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+
+            //    options.LoginPath = $"/Identity/Account/Login";
+            //    options.LogoutPath = $"/Identity/Account/Logout";
+            //    options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+            //    options.SlidingExpiration = true;
+            //});
+            //services.AddSession(options =>
+            //{
+            //    options.IdleTimeout = TimeSpan.FromMinutes(30);
+            //    options.Cookie.HttpOnly = true;
+            //    options.Cookie.IsEssential = true;
+            //});
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Medius", Version = "v1" });
@@ -69,10 +117,28 @@ namespace Medius
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Medius v1"));
             }
+            // migrate database changes on startup (includes initial db creation)
+            //context.Database.Migrate();
 
-            app.UseHttpsRedirection();
+            app.UseStaticFiles(); // For the wwwroot folder
+
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            // global cors policy
+            app.UseCors(x => x
+                .SetIsOriginAllowed(origin => true)
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .AllowCredentials());
+
+            // global error handler
+            app.UseMiddleware<ErrorHandlerMiddleware>();
+
+            // custom jwt auth middleware
+            app.UseMiddleware<JwtMiddleware>();
+
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -81,21 +147,6 @@ namespace Medius
             {
                 endpoints.MapControllers();
             });
-            // This is a key step of the solution as we need to supply a meaningful and fully working
-            // implementation of the OAuthBearerOptions object when we configure the OAuth Bearer authentication mechanism. 
-            // The trick here is to reuse the previously defined OAuthOptions object that already
-            // implements almost everything we need
-            //OAuthBearerOptions =
-            //    new OAuthBearerAuthenticationOptions
-            //    {
-            //        AccessTokenFormat = OAuthOptions.AccessTokenFormat,
-            //        AccessTokenProvider = OAuthOptions.AccessTokenProvider,
-            //        AuthenticationMode = OAuthOptions.AuthenticationMode,
-            //        AuthenticationType = OAuthOptions.AuthenticationType,
-            //        Description = OAuthOptions.Description,
-            //        Provider = new CustomBearerAuthenticationProvider(),
-            //        SystemClock = OAuthOptions.SystemClock,
-            //    };
 
             // The provider is the only object we need to redefine. See below for the implementation
 
@@ -109,19 +160,32 @@ namespace Medius
             //    consumerKey: "",
             //    consumerSecret: "");
 
-            
+
         }
-        public class CustomBearerAuthenticationProvider : OAuthBearerAuthenticationProvider
-        {
-            // This validates the identity based on the issuer of the claim.
-            // The issuer is set in the API endpoint that logs the user in
-            public override Task ValidateIdentity(OAuthValidateIdentityContext context)
-            {
-                var claims = context.Ticket.Identity.Claims;
-                if (claims.Count() == 0 || claims.Any(claim => claim.Issuer != "Facebook" && claim.Issuer != "LOCAL_AUTHORITY"))
-                    context.Rejected();
-                return Task.FromResult<object>(null);
-            }
-        }
+        //private X509Certificate2 GetCertificate()
+        //{
+        //    var assembly = typeof(Startup).GetTypeInfo().Assembly;
+        //    using (Stream stream = assembly.GetManifestResourceStream(assembly.GetManifestResourceNames().FirstOrDefault(r => r.EndsWith("cnblogs.pfx"))))
+
+        //    using (StreamReader reader = new StreamReader(stream))
+        //    {
+        //        string result = reader.ReadToEnd();
+        //        var bytes = new byte[stream.Length];
+        //        stream.Read(bytes, 0, bytes.Length);
+        //        return new X509Certificate2(bytes);
+        //    }
+
+
+        //    //using (var stream = assembly.GetManifestResourceStream(
+        //    //    assembly.GetManifestResourceNames().FirstOrDefault(r => r.EndsWith("cnblogs.pfx"))))
+        //    //{
+        //    //    if (stream == null)
+        //    //        throw new ArgumentNullException(nameof(stream));
+
+        //    //var bytes = new byte[stream.Length];
+        //    //stream.Read(bytes, 0, bytes.Length);
+        ////}
+
+        //}
     }
 }
