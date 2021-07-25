@@ -14,6 +14,14 @@ using Microsoft.OpenApi.Models;
 using Microsoft.Owin.Security.OAuth;
 using System;
 using AutoMapper;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Server.IIS;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
+using System.Reflection;
+using System.Linq;
+using Castle.Core.Internal;
 
 namespace Medius
 {
@@ -33,6 +41,7 @@ namespace Medius
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             // add services to the DI container
             //db connection
             services.AddDbContext<ApplicationDbContext>(options =>
@@ -44,8 +53,8 @@ namespace Medius
             //controller
             services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.IgnoreNullValues = true);
 
-            services.AddCors(options => options.AddDefaultPolicy(
-                builder => builder.AllowAnyOrigin()));
+            //services.AddCors(options => options.AddDefaultPolicy(
+            //    builder => builder.AllowAnyOrigin()));
 
             //automapper
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -55,42 +64,44 @@ namespace Medius
             services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
             services.AddScoped<EmailSender>();
 
-            services
-         .AddAuthentication(options =>
-         {
-             options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-         })
-         .AddCookie(options =>
-         {
-            // Change the options as needed
-        });
+            //services.AddTransient<IClaimsTransformation, ClaimsTransformer>();
+            services.AddAuthentication(IISServerDefaults.AuthenticationScheme);
+            //services.AddTransient<IClaimsTransformation, ClaimsTransformer>();
+            services.Configure<IISServerOptions>(options =>
+            {
+                options.AutomaticAuthentication = false;
+            });
 
             services.Configure<EmailOptions>(Configuration);
             services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
             services.Configure<BrainTreeSettings>(Configuration.GetSection("BrainTree"));
             services.AddSingleton<IBrainTreeGate, BrainTreeGate>();
             //Twilio Account
-            var twilioSection =
-                Configuration.GetSection("Twilio");
+            //var twilioSection =
+            //    Configuration.GetSection("Twilio");
+            //..
+            //services.AddDataProtection()
+            //    .PersistKeysToFileSystem(new System.IO.DirectoryInfo(@"./"))
+                /*.ProtectKeysWithCertificate(GetCertificate())*/
 
             services.AddRazorPages();
-            services.ConfigureApplicationCookie(options =>
-            {
-                // Cookie settings
-                options.Cookie.HttpOnly = true;
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+            //services.ConfigureApplicationCookie(options =>
+            //{
+            //    // Cookie settings
+            //    options.Cookie.HttpOnly = true;
+            //    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
 
-                options.LoginPath = $"/Identity/Account/Login";
-                options.LogoutPath = $"/Identity/Account/Logout";
-                options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
-                options.SlidingExpiration = true;
-            });
-            services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromMinutes(30);
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-            });
+            //    options.LoginPath = $"/Identity/Account/Login";
+            //    options.LogoutPath = $"/Identity/Account/Logout";
+            //    options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+            //    options.SlidingExpiration = true;
+            //});
+            //services.AddSession(options =>
+            //{
+            //    options.IdleTimeout = TimeSpan.FromMinutes(30);
+            //    options.Cookie.HttpOnly = true;
+            //    options.Cookie.IsEssential = true;
+            //});
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Medius", Version = "v1" });
@@ -111,7 +122,7 @@ namespace Medius
 
             app.UseStaticFiles(); // For the wwwroot folder
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
 
@@ -136,7 +147,7 @@ namespace Medius
             {
                 endpoints.MapControllers();
             });
-           
+
             // The provider is the only object we need to redefine. See below for the implementation
 
 
@@ -151,6 +162,30 @@ namespace Medius
 
 
         }
-       
+        //private X509Certificate2 GetCertificate()
+        //{
+        //    var assembly = typeof(Startup).GetTypeInfo().Assembly;
+        //    using (Stream stream = assembly.GetManifestResourceStream(assembly.GetManifestResourceNames().FirstOrDefault(r => r.EndsWith("cnblogs.pfx"))))
+
+        //    using (StreamReader reader = new StreamReader(stream))
+        //    {
+        //        string result = reader.ReadToEnd();
+        //        var bytes = new byte[stream.Length];
+        //        stream.Read(bytes, 0, bytes.Length);
+        //        return new X509Certificate2(bytes);
+        //    }
+
+
+        //    //using (var stream = assembly.GetManifestResourceStream(
+        //    //    assembly.GetManifestResourceNames().FirstOrDefault(r => r.EndsWith("cnblogs.pfx"))))
+        //    //{
+        //    //    if (stream == null)
+        //    //        throw new ArgumentNullException(nameof(stream));
+
+        //    //var bytes = new byte[stream.Length];
+        //    //stream.Read(bytes, 0, bytes.Length);
+        ////}
+
+        //}
     }
 }

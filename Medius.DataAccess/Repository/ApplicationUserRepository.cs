@@ -6,6 +6,7 @@ using Medius.Model.ViewModels;
 using Medius.Models.Enums;
 using Medius.Utility;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
@@ -17,6 +18,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 using BC = BCrypt.Net.BCrypt;
 
 namespace Medius.DataAccess.Repository
@@ -62,7 +64,24 @@ namespace Medius.DataAccess.Repository
             return response;
         }
 
-        public AuthenticateResponse RefreshToken(string token, string ipAddress)
+        public async Task<AuthenticateResponse> ChangePassword(ChangePassword model)
+        {
+            var account = await _db.Users.SingleOrDefaultAsync(x => x.Id == model.id);
+
+            if (account == null || !account.IsVerified || !BC.Verify(model.password, account.PasswordHash))
+                throw new AppException("Email or password is incorrect");
+
+            account.PasswordHash = BC.HashPassword(model.newPassword);
+            account.Updated = DateTime.UtcNow;
+            // save changes to db
+            _db.Update(account);
+            _db.SaveChanges();
+
+            var response = _mapper.Map<AuthenticateResponse>(account);
+            return response;
+        }
+
+    public AuthenticateResponse RefreshToken(string token, string ipAddress)
         {
             var (refreshToken, account) = getRefreshToken(token);
 
@@ -158,14 +177,14 @@ namespace Medius.DataAccess.Repository
             _db.ApplicationUsers.Update(account);
             _db.SaveChanges();
             // Email Service
-            EmailService service = new EmailService();
-            string path = Path.Combine(_env.ContentRootPath, "/VerificationCode.html");
+            //EmailService service = new EmailService();
+            string path = Path.Combine(_env.WebRootPath, "VerificationCode.html");
             string content = System.IO.File.ReadAllText(path);
             content = content.Replace("{{resetToken}}", account.ResetToken);
             content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
             string subject = "Hello and Welcome to Medius !";
 
-            _emailService.SendEmailAsync(content, subject, model.Email);
+            _emailService.SendEmailAsync(model.Email, subject, content);
 
             return account.ResetToken;
         }
@@ -324,14 +343,14 @@ namespace Medius.DataAccess.Repository
         {
             string message;
             string subject = "Email Verification";
-            string path = Path.Combine(_env.WebRootPath, "VerificationCode.html");
+            string path = Path.Combine(_env.WebRootPath, "WelcomeEmail.html");
             string content = System.IO.File.ReadAllText(path);
             if (!string.IsNullOrEmpty(origin))
             {
                 var resetToken = $"{origin}/account/verify-email?token={account.VerificationToken}";
                 message = $@"<p>Please click the below link to verify your email address:</p>
                              <p><a href=""{resetToken}"">{resetToken}</a></p>";
-                content = content.Replace("{{resetToken}}", account.VerificationToken);
+                content = content.Replace("{{verificationToken}}", account.VerificationToken);
                 content = content.Replace("{{message}}", message);
                 content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
             }
@@ -345,7 +364,7 @@ namespace Medius.DataAccess.Repository
                 content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
 
             }
-            _emailService.SendEmailAsync(content, subject, account.Email);
+            _emailService.SendEmailAsync(account.Email, subject, content);
 
         }
 

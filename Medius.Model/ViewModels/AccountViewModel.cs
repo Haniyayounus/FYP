@@ -43,14 +43,14 @@ namespace Medius.Model.ViewModels
     }
     public class AuthenticateResponse
     {
-        public int Id { get; set; }
-        public string UserNAame { get; set; }
+        public string Id { get; set; }
+        public string UserName { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
-        public string CNIC { get; set; }
-        public string Role { get; set; }
+        public string Cnic { get; set; }
+        public Role Role { get; set; }
         public DateTime Created { get; set; }
         public DateTime? Updated { get; set; }
         public bool IsVerified { get; set; }
@@ -58,6 +58,8 @@ namespace Medius.Model.ViewModels
 
         [JsonIgnore] // refresh token is returned in http only cookie
         public string RefreshToken { get; set; }
+        public string ImagePath { get; set; }
+        public bool AcceptTerms { get; set; }
     }
     public class AuthenticateRequest
     {
@@ -231,5 +233,11 @@ namespace Medius.Model.ViewModels
     {
         [Required]
         public string Token { get; set; }
+    }
+    public class ChangePassword
+    {
+        public string id { get; set; }
+        public string password { get; set; }
+        public string newPassword { get; set; }
     }
 }

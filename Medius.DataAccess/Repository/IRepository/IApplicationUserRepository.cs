@@ -11,6 +11,7 @@ namespace Medius.DataAccess.Repository.IRepository
         AuthenticateResponse Authenticate(AuthenticateRequest model, string ipAddress);
         AuthenticateResponse RefreshToken(string token, string ipAddress);
         void RevokeToken(string token, string ipAddress);
+        Task<AuthenticateResponse> ChangePassword(ChangePassword model);
         ApplicationUser Register(RegisterRequest model, string origin);
         void VerifyEmail(string token);
         string ForgotPassword(ForgotPasswordRequest model, string origin);
