@@ -40,6 +40,10 @@ namespace Medius.Model
             [ForeignKey("UserId")]
             public ApplicationUser Appl { get; set; }
             public string UserId { get; set; }
-        
+            [ForeignKey("ModifiedBy")]
+            public ApplicationUser Admin { get; set; }
+            public string ModifiedBy { get; set; }
+
+
     }
 }

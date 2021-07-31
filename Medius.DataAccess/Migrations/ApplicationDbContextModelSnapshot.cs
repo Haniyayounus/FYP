@@ -174,6 +174,9 @@ namespace Medius.DataAccess.Migrations
                     b.Property<int>("ModeofRegistration")
                         .HasColumnType("int");
 
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -194,6 +197,8 @@ namespace Medius.DataAccess.Migrations
                     b.HasIndex("ClaimId");
 
                     b.HasIndex("IpFilterId");
+
+                    b.HasIndex("ModifiedBy");
 
                     b.HasIndex("UserId");
 
@@ -266,17 +271,27 @@ namespace Medius.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("LastModify")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Question")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("ModifiedBy");
 
                     b.ToTable("FAQs");
                 });
@@ -479,7 +494,7 @@ namespace Medius.DataAccess.Migrations
 
                             b1.HasIndex("AccountId");
 
-                            b1.ToTable("RefreshToken");
+                            b1.ToTable("RefreshTokens");
 
                             b1.WithOwner("Account")
                                 .HasForeignKey("AccountId");
@@ -506,9 +521,15 @@ namespace Medius.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Medius.Model.ApplicationUser", "Admin")
+                        .WithMany()
+                        .HasForeignKey("ModifiedBy");
+
                     b.HasOne("Medius.Model.ApplicationUser", "Appl")
                         .WithMany()
                         .HasForeignKey("UserId");
+
+                    b.Navigation("Admin");
 
                     b.Navigation("Appl");
 
@@ -517,6 +538,21 @@ namespace Medius.DataAccess.Migrations
                     b.Navigation("Claim");
 
                     b.Navigation("IpFilter");
+                });
+
+            modelBuilder.Entity("Medius.Model.FAQ", b =>
+                {
+                    b.HasOne("Medius.Model.ApplicationUser", "Appl")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy");
+
+                    b.HasOne("Medius.Model.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("ModifiedBy");
+
+                    b.Navigation("Appl");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

@@ -1,6 +1,8 @@
 ﻿using Medius.DataAccess.Repository.IRepository;
+using Medius.Model.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace Medius.Controllers
@@ -9,8 +11,8 @@ namespace Medius.Controllers
     [ApiController]
     public class CaseController : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork;
-        public CaseController(IUnitOfWork unitOfWork)
+        private readonly ICaseRepository _unitOfWork;
+        public CaseController(ICaseRepository unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }
@@ -19,7 +21,7 @@ namespace Medius.Controllers
         [Route("GetAll")]
         public async Task<IActionResult> GetAll()
         {
-            var allObj = await _unitOfWork.Case.GetAllAsync();
+            var allObj = await _unitOfWork.GetAllAsync();
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -27,7 +29,7 @@ namespace Medius.Controllers
         [Route("GetAllUserCases")]
         public async Task<IActionResult> GetAllUserCases(string applicationUserId)
         {
-            var allObj = await _unitOfWork.Case.GetAllUserCases(applicationUserId);
+            var allObj = await _unitOfWork.GetAllUserCases(applicationUserId);
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -35,7 +37,7 @@ namespace Medius.Controllers
         [Route("GetAllTrademark")]
         public async Task<IActionResult> GetAllTrademark()
         {
-            var allObj = await _unitOfWork.Case.GetAllTrademark();
+            var allObj = await _unitOfWork.GetAllTrademark();
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -43,7 +45,7 @@ namespace Medius.Controllers
         [Route("GetAllPatent")]
         public async Task<IActionResult> GetAllPatent()
         {
-            var allObj = await _unitOfWork.Case.GetAllPatent();
+            var allObj = await _unitOfWork.GetAllPatent();
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -51,7 +53,7 @@ namespace Medius.Controllers
         [Route("GetAllDesign")]
         public async Task<IActionResult> GetAllDesign()
         {
-            var allObj = await _unitOfWork.Case.GetAllDesign();
+            var allObj = await _unitOfWork.GetAllDesign();
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -59,7 +61,7 @@ namespace Medius.Controllers
         [Route("GetAllCopyright")]
         public async Task<IActionResult> GetAllCopyright()
         {
-            var allObj = await _unitOfWork.Case.GetAllCopyright();
+            var allObj = await _unitOfWork.GetAllCopyright();
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -67,7 +69,7 @@ namespace Medius.Controllers
         [Route("GetUserCopyright")]
         public async Task<IActionResult> GetUserCopyright(string applicationUserId)
         {
-            var allObj = await _unitOfWork.Case.GetUserCopyright(applicationUserId);
+            var allObj = await _unitOfWork.GetUserCopyright(applicationUserId);
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -75,7 +77,7 @@ namespace Medius.Controllers
         [Route("GetUserTrademark")]
         public async Task<IActionResult> GetUserTrademark(string applicationUserId)
         {
-            var allObj = await _unitOfWork.Case.GetUserTrademark(applicationUserId);
+            var allObj = await _unitOfWork.GetUserTrademark(applicationUserId);
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -83,7 +85,7 @@ namespace Medius.Controllers
         [Route("GetUserDesign")]
         public async Task<IActionResult> GetUserDesign(string applicationUserId)
         {
-            var allObj = await _unitOfWork.Case.GetUserDesign(applicationUserId);
+            var allObj = await _unitOfWork.GetUserDesign(applicationUserId);
             return StatusCode(StatusCodes.Status200OK, allObj);
         }
 
@@ -91,8 +93,29 @@ namespace Medius.Controllers
         [Route("GetUserPatent")]
         public async Task<IActionResult> GetUserPatent(string applicationUserId)
         {
-            var allObj = await _unitOfWork.Case.GetUserPatent(applicationUserId);
+            var allObj = await _unitOfWork.GetUserPatent(applicationUserId);
             return StatusCode(StatusCodes.Status200OK, allObj);
+        }
+
+        [HttpPut]
+        [Route("ChangeIPStatus")]
+        public async Task<IActionResult> ChangeIPStatus(ChangeStatusViewModel viewModel)
+        {
+            try
+            {
+                if (viewModel.loggedInUserId == null)
+                    return StatusCode(StatusCodes.Status404NotFound, "Logged in user id can't be null");
+                if (viewModel.userId == null)
+                    return StatusCode(StatusCodes.Status404NotFound, "User id can't be null");
+                if (viewModel.caseId == 0)
+                    return StatusCode(StatusCodes.Status404NotFound, "Case id can't be null");
+                var allObj = await _unitOfWork.ChangeIPStatus(viewModel);
+                return StatusCode(StatusCodes.Status200OK, allObj);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, ex.Message);
+            }
         }
 
     }

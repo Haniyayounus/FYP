@@ -36,11 +36,24 @@ namespace Medius.Model.ViewModel
 
         [Required]
         public string Answer { get; set; }
+        [Required]
+        public string CreatedBy { get; set; }
+        [Required]
+        public string ModifiedBy { get; set; }
     }
     public class UpdateFAQViewModel : FAQViewModel
     {
         [Required]
         public override int Id { get; set; }
+    }
+    public class ArchiveFAQVM
+    {
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public string CreatedBy { get; set; }
+        [Required]
+        public string ModifiedBy { get; set; }
     }
     public class IPFilterViewModel
     {
