@@ -8,7 +8,6 @@ namespace Medius.DataAccess.Repository.IRepository
         IClaimRepository Claim { get; }
         IFAQRepository FAQ { get; }
         IIpFilterRepository IpFilter { get; }
-        ICaseRepository Case { get; }
         void Save();
     }
 }

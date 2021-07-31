@@ -1,5 +1,5 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Medius.Model
 {
@@ -13,5 +13,12 @@ namespace Medius.Model
 
         [Required]
         public string Answer { get; set; }
+
+        [ForeignKey("CreatedBy")]
+        public ApplicationUser Appl { get; set; }
+        public string CreatedBy { get; set; }
+        [ForeignKey("ModifiedBy")]
+        public ApplicationUser User { get; set; }
+        public string ModifiedBy { get; set; }
     }
 }

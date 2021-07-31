@@ -45,7 +45,9 @@ namespace Medius.Controllers
                 FAQ faq = new FAQ
                 {
                     Question = viewModel.Question,
-                    Answer = viewModel.Answer
+                    Answer = viewModel.Answer,
+                    CreatedBy = viewModel.CreatedBy,
+                    ModifiedBy = viewModel.ModifiedBy
                 };
                 var data = await _unitOfWork.FAQ.AddAsync(faq);
                 _unitOfWork.Save();
@@ -67,7 +69,9 @@ namespace Medius.Controllers
                 {
                     Id = viewModel.Id,
                     Question = viewModel.Question,
-                    Answer = viewModel.Answer
+                    Answer = viewModel.Answer,
+                    CreatedBy = viewModel.CreatedBy,
+                    ModifiedBy = viewModel.ModifiedBy
                 };
                 var data = await _unitOfWork.FAQ.Update(faq);
                 _unitOfWork.Save();
@@ -93,6 +97,14 @@ namespace Medius.Controllers
             _unitOfWork.Save();
 
             return StatusCode(StatusCodes.Status200OK);
+        }
+
+        [HttpPut]
+        [Route("Archive")]
+        public async Task<IActionResult> Archive(ArchiveFAQVM viewModel)
+        {
+            var faq = await _unitOfWork.FAQ.Archive(viewModel);
+            return StatusCode(StatusCodes.Status200OK, faq);
         }
     }
 }

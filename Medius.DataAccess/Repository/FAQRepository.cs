@@ -1,6 +1,7 @@
 ﻿using Medius.DataAccess.Data;
 using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
+using Medius.Model.ViewModel;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -19,7 +20,7 @@ namespace Medius.DataAccess.Repository
 
         public async Task<FAQ> Update(FAQ faq)
         {
-            var objFromDb = _db.FAQs.FirstOrDefault(s => s.Id == faq.Id) ?? throw new Exception($"No Question found against id:'{faq.Id}'");
+            var objFromDb = _db.FAQs.FirstOrDefault(s => s.Id == faq.Id) ?? throw new Exception($"No FAQ found against id:'{faq.Id}'");
             if (faq.Id == 0) throw new Exception($"FAQ id cant be null");
             if (await IsFAQDuplicate(faq.Id, faq.Question)) throw new Exception($"'{faq.Question}' already exists. Please choose a different name.");
 
@@ -38,6 +39,17 @@ namespace Medius.DataAccess.Repository
             if (await IsFAQDuplicate(entity.Question)) throw new Exception($"'{entity.Question}' already exists. Please choose a different name.");
             await _db.FAQs.AddAsync(entity);
             return entity;
+        }
+        public async Task<FAQ> Archive(ArchiveFAQVM viewModel)
+        {
+            var objFromDb = await _db.FAQs.FirstOrDefaultAsync(s => s.Id == viewModel.Id) ?? throw new Exception($"No FAQ found against id:'{viewModel.Id}'");
+            if (viewModel.Id == 0) throw new Exception($"FAQ id cant be null");
+
+            objFromDb.IsActive = false;
+            objFromDb.ModifiedBy = viewModel.ModifiedBy;
+            objFromDb.LastModify = DateTime.Now;
+            await _db.SaveChangesAsync();
+            return objFromDb;
         }
     }
 }

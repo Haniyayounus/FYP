@@ -89,22 +89,12 @@ namespace Medius.Controllers
             // validate
             if (_db.ApplicationUsers.Any(x => x.Email == model.Email))
             {
-                // send already registered error in email to prevent account enumeration
                 return Ok(
                     new { 
                         message = "Email already Registered" });
 
             }
             var account = _unitOfWork.Register(model, Request.Headers["origin"]);
-            ////Email Service
-            //EmailService service = new EmailService();
-            //string path = Path.Combine(_env.WebRootPath, "/VerificationCode.html");
-            //string content = System.IO.File.ReadAllText(path);
-            //content = content.Replace("{{resetToken}}", account.VerificationToken);
-            //content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
-            //string subject = "Hello and Welcome to Medius !";
-
-            //_emailService.SendEmailAsync(content, subject, model.Email);
             return Ok(new { message = "Registration successful, please check your email for verification instructions" });
             }
 
@@ -245,6 +235,17 @@ namespace Medius.Controllers
             _unitOfWork.Delete(userId);
                 return Ok(new { message = "Account deleted successfully" });
             }
+        [Authorize(Role.Admin)]
+        [HttpPut("Archive/{Id}")]
+        public async Task<IActionResult> Archive(string userId)
+        {
+            //// users can delete their own account and admins can delete any account
+            //if (adminId != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
+            //    return Unauthorized(new { message = "Unauthorized" });
+
+            await _unitOfWork.ArchiveUser(userId);
+            return StatusCode(StatusCodes.Status200OK, "Account archived successfully" );
+        }
 
 
         //Two Factor Authentication

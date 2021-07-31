@@ -7,9 +7,7 @@ using Medius.Models.Enums;
 using Medius.Utility;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -119,13 +117,6 @@ namespace Medius.DataAccess.Repository
 
         public ApplicationUser Register(RegisterRequest model, string origin)
         {
-            //// validate
-            //if (_db.ApplicationUsers.Any(x => x.Email == model.Email))
-            //{
-            //    // send already registered error in email to prevent account enumeration
-            //    sendAlreadyRegisteredEmail(model.Email, origin);
-            //    return;
-            //}
 
             // map model to new account object
             model.UserName = model.FirstName + ' ' + model.LastName;
@@ -133,7 +124,7 @@ namespace Medius.DataAccess.Repository
 
             // first registered account is an admin
             var isFirstAccount = _db.ApplicationUsers.Count() == 0;
-            account.Role = isFirstAccount ? Role.Admin : Role.User;
+            account.Role = isFirstAccount ? Role.Admin : model.Role.Equals("") ? Role.User : Role.SubAdmin;
             account.Created = DateTime.UtcNow;
             account.VerificationToken = randomTokenString();
 
@@ -279,6 +270,14 @@ namespace Medius.DataAccess.Repository
             _db.ApplicationUsers.Remove(account);
             _db.SaveChanges();
         }
+        public async Task<AccountResponse> ArchiveUser(string id)
+        {
+            var account = getAccount(id);
+            account.Active = false;
+            await _db.SaveChangesAsync();
+            var response = _mapper.Map<AccountResponse>(account);
+            return response;
+        }
 
         // helper methods
 
@@ -342,27 +341,59 @@ namespace Medius.DataAccess.Repository
         private void sendVerificationEmail(ApplicationUser account, string origin)
         {
             string message;
-            string subject = "Email Verification";
-            string path = Path.Combine(_env.WebRootPath, "WelcomeEmail.html");
-            string content = System.IO.File.ReadAllText(path);
-            if (!string.IsNullOrEmpty(origin))
+            string subject;
+            string path;
+            string content;
+            if (account.Role == Role.User)
             {
-                var resetToken = $"{origin}/account/verify-email?token={account.VerificationToken}";
-                message = $@"<p>Please click the below link to verify your email address:</p>
+                subject = "Email Verification";
+                path = Path.Combine(_env.WebRootPath, "WelcomeEmail.html");
+                content = System.IO.File.ReadAllText(path);
+                if (!string.IsNullOrEmpty(origin))
+                {
+                    var resetToken = $"{origin}/account/VerifyEmail?token={account.VerificationToken}";
+                    message = $@"<p>Please click the below link to verify your email address:</p>
                              <p><a href=""{resetToken}"">{resetToken}</a></p>";
-                content = content.Replace("{{verificationToken}}", account.VerificationToken);
-                content = content.Replace("{{message}}", message);
-                content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
+                    content = content.Replace("{{resetToken}}", resetToken);
+                    content = content.Replace("{{verificationToken}}", account.VerificationToken);
+                    content = content.Replace("{{message}}", message);
+                    content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
+                }
+                else
+                {
+                    message = $@"<p>Please use the below token to verify your email address with the <code>/accounts/verify-email</code> api route:</p>
+                             <p><code>{account.VerificationToken}</code></p>";
+                    content = content.Replace("{{resetToken}}", account.VerificationToken);
+                    content = content.Replace("{{message}}", message);
+                    content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
+
+                }
             }
             else
             {
-                message = $@"<p>Please use the below token to verify your email address with the <code>/accounts/verify-email</code> api route:</p>
+                subject = "Invite Email";
+                path = Path.Combine(_env.WebRootPath, "InviteEmail.html");
+                content = System.IO.File.ReadAllText(path);
+                if (!string.IsNullOrEmpty(origin))
+                {
+                    var resetToken = $"{origin}/account/VerifyEmail?token={account.VerificationToken}";
+                    message = $@"<p>Please click the below link to verify your email address:</p>
+                             <p><a href=""{resetToken}"">{resetToken}</a></p>";
+                    content = content.Replace("{{resetToken}}", resetToken);
+                    content = content.Replace("{{verificationToken}}", account.VerificationToken);
+                    content = content.Replace("{{message}}", message);
+                    content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
+                }
+                else
+                {
+                    message = $@"<p>Please use the below token to verify your email address with the <code>/accounts/verify-email</code> api route:</p>
                              <p><code>{account.VerificationToken}</code></p>";
-                
-                content = content.Replace("{{resetToken}}", account.VerificationToken);
-                content = content.Replace("{{message}}", message);
-                content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
 
+                    content = content.Replace("{{resetToken}}", account.VerificationToken);
+                    content = content.Replace("{{message}}", message);
+                    content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
+
+                }
             }
             _emailService.SendEmailAsync(account.Email, subject, content);
 
@@ -385,27 +416,33 @@ namespace Medius.DataAccess.Repository
         //    );
         //}
 
-        //private void sendPasswordResetEmail(ApplicationUser account, string origin)
-        //{
-        //    string message;
-        //    if (!string.IsNullOrEmpty(origin))
-        //    {
-        //        var resetUrl = $"{origin}/account/reset-password?token={account.ResetToken}";
-        //        message = $@"<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
-        //                     <p><a href=""{resetUrl}"">{resetUrl}</a></p>";
-        //    }
-        //    else
-        //    {
-        //        message = $@"<p>Please use the below token to reset your password with the <code>/accounts/reset-password</code> api route:</p>
-        //                     <p><code>{account.ResetToken}</code></p>";
-        //    }
+        private void sendPasswordResetEmail(ApplicationUser account, string origin)
+        {
+            string message;
+            string subject = "Reset Password";
+            string path = Path.Combine(_env.WebRootPath, "PasswordResetEmail.html");
+            string content = System.IO.File.ReadAllText(path);
+            if (!string.IsNullOrEmpty(origin))
+            {
+                var resetUrl = $"{origin}/account/reset-password?token={account.ResetToken}";
+                message = $@"<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
+                             <p><a href=""{resetUrl}"">{resetUrl}</a></p>";
+                content = content.Replace("{{resetToken}}", account.ResetToken);
+                content = content.Replace("{{message}}", message);
+                content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
 
-        //    _emailService.SendEmailAsync(
-        //        account.Email,
-        //        subject: "Sign-up Verification API - Reset Password",
-        //        $@"<h4>Reset Password Email</h4>
-        //                 {message}"
-        //    );
-        //}
+            }
+            else
+            {
+                message = $@"<p>Please use the below token to reset your password with the <code>/accounts/reset-password</code> api route:</p>
+                             <p><code>{account.ResetToken}</code></p>";
+                content = content.Replace("{{resetToken}}", account.ResetToken);
+                content = content.Replace("{{message}}", message);
+                content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
+
+            }
+            _emailService.SendEmailAsync(account.Email, subject, content);
+
+        }
     }
 }

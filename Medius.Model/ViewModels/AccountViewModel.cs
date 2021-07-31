@@ -74,6 +74,7 @@ namespace Medius.Model.ViewModels
     public class RegisterRequest
     {
         public string UserName { get; set; }
+        public Role Role { get; set; }
 
         [Required]
         public string FirstName { get; set; }

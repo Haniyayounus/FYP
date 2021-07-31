@@ -62,6 +62,7 @@ namespace Medius
             // configure DI for application services
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
+            services.AddScoped<ICaseRepository, CaseRepository>();
             services.AddScoped<EmailSender>();
 
             //services.AddTransient<IClaimsTransformation, ClaimsTransformer>();

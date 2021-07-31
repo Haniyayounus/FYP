@@ -1,5 +1,6 @@
 ﻿using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
+using Medius.Model.ViewModels;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -17,7 +18,7 @@ namespace Medius.DataAccess.Repository.IRepository
         Task<List<Case>> GetUserDesign(string userId);
         Task<List<Case>> GetUserPatent(string userId);
         Task<List<Case>> GetAllUserCases(string userId);
-
+        Task<Case> ChangeIPStatus(ChangeStatusViewModel vm);
 
 
         Task<Case> AddAsync(Case entity);
@@ -25,5 +26,6 @@ namespace Medius.DataAccess.Repository.IRepository
         Task<Case> GetCase(int id);
         Task<bool> IsCaseDuplicate(string title);
         Task<bool> IsCaseDuplicate(int id, string title);
+        void sendCaseStatusEmail(Case entity);
     }
 }
