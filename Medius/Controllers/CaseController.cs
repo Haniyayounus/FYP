@@ -1,5 +1,6 @@
 ﻿using Medius.DataAccess.Repository.IRepository;
 using Medius.Model.ViewModels;
+using Medius.Models.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -113,6 +114,34 @@ namespace Medius.Controllers
                 return StatusCode(StatusCodes.Status200OK, allObj);
             }
             catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, ex.Message);
+            }
+        }
+
+        [HttpPost]
+        [Route("Add")]
+        public async Task<IActionResult> Add(ModeofRegistration mode, string title, string desc, int cityId, int claimId,int filterId, string userId, string modifyBy, IFormFile doc, IFormFile pic,string app, string cont, CaseType type)
+        {
+            try
+            {
+                CaseViewModel viewModel = new CaseViewModel{ 
+                    Title = title,
+                    Description = desc,
+                    CityId = cityId,
+                    ClaimId =claimId,
+                    IpFilterId = filterId,
+                    UserId = userId,
+                    ModifiedBy = modifyBy,
+                    ModeofRegistration = mode,
+                    Type = type,
+                    Image = pic,
+                    Document = doc
+                };
+                var allObj = await _unitOfWork.Add(viewModel);
+                return StatusCode(StatusCodes.Status200OK, allObj);
+            }
+            catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status400BadRequest, ex.Message);
             }
