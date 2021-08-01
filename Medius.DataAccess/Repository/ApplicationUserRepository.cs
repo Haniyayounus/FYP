@@ -124,7 +124,7 @@ namespace Medius.DataAccess.Repository
 
             // first registered account is an admin
             var isFirstAccount = _db.ApplicationUsers.Count() == 0;
-            account.Role = isFirstAccount ? Role.Admin : model.Role.Equals("") ? Role.User : Role.SubAdmin;
+            account.Role = isFirstAccount ? Role.Admin : model.Role;
             account.Created = DateTime.UtcNow;
             account.VerificationToken = randomTokenString();
 
@@ -351,7 +351,7 @@ namespace Medius.DataAccess.Repository
                 content = System.IO.File.ReadAllText(path);
                 if (!string.IsNullOrEmpty(origin))
                 {
-                    var resetToken = $"{origin}/account/VerifyEmail?token={account.VerificationToken}";
+                    var resetToken = $"{origin}/api/account/VerifyEmail?token={account.VerificationToken}";
                     message = $@"<p>Please click the below link to verify your email address:</p>
                              <p><a href=""{resetToken}"">{resetToken}</a></p>";
                     content = content.Replace("{{resetToken}}", resetToken);
@@ -424,7 +424,7 @@ namespace Medius.DataAccess.Repository
             string content = System.IO.File.ReadAllText(path);
             if (!string.IsNullOrEmpty(origin))
             {
-                var resetUrl = $"{origin}/account/reset-password?token={account.ResetToken}";
+                var resetUrl = $"{origin}/api/account/reset-password?token={account.ResetToken}";
                 message = $@"<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
                              <p><a href=""{resetUrl}"">{resetUrl}</a></p>";
                 content = content.Replace("{{resetToken}}", account.ResetToken);
