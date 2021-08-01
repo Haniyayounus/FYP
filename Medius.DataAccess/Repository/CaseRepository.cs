@@ -5,6 +5,7 @@ using Medius.Model.ViewModels;
 using Medius.Models.Enums;
 using Medius.Utility;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -45,11 +46,41 @@ namespace Medius.DataAccess.Repository
         public Task<bool> IsCaseDuplicate(int id, string title)
              => _db.Cases.AnyAsync(x => x.Title.ToLower().Equals(title.ToLower()) && x.IsActive == true && !x.Id.Equals(id));
 
-        public async Task<Case> AddAsync(Case entity)
+        public async Task<Case> Add(CaseViewModel viewModel)
         {
-            if (await IsCaseDuplicate(entity.Title)) throw new Exception($"'{entity.Title}' already exists. Please choose a different name.");
-            await _db.Cases.AddAsync(entity);
-            return entity;
+            if (viewModel.Title == null || viewModel.Title == "") throw new Exception($"Title is required. Please write a Title.");
+            if (await IsCaseDuplicate(viewModel.Title)) throw new Exception($"'{viewModel.Title}' already exists. Please choose a different name.");
+
+            //image upload
+            var image = await UploadedImage(viewModel.Type, viewModel.Image);
+            if (image == null) throw new Exception($"Image is required.");
+
+            //document upload
+            var document = await UploadFile(viewModel.Type, viewModel.Document);
+            if (document == null) throw new Exception($"File is required.");
+
+            Case model = new Case()
+            {
+                Title = viewModel.Title,
+                Description = viewModel.Description,
+                Type = viewModel.Type,
+                Contact = viewModel.Contact,
+                Application = viewModel.Application,
+                Status = Status.Draft,
+                ModeofRegistration = viewModel.ModeofRegistration,
+                ModifiedBy = viewModel.ModifiedBy,
+                ClaimId = viewModel.ClaimId,
+                CityId = viewModel.CityId,
+                UserId = viewModel.UserId,
+                IpFilterId = viewModel.IpFilterId,
+                ImagePath = image.ImagePath,
+                DocumentPath = document.DocumentPath
+            };
+            await _db.Cases.AddAsync(model);
+            await _db.SaveChangesAsync();
+            var user = await _db.Users.FirstOrDefaultAsync(x => x.Id == model.UserId);
+            sendCaseRegisterEmail(model, user.Email);
+            return model;
         }
         public async Task<Case> GetCase(int id)
         {
@@ -119,8 +150,12 @@ namespace Medius.DataAccess.Repository
             string subject = "Email Verification";
             if(account.Status == Status.Reject)
                  path = Path.Combine(_env.WebRootPath, "CaseRejectionEmail.html");
+            
+            else if(account.Status == Status.Publish)
+                path = Path.Combine(_env.WebRootPath, "CasePublishEmail.html");
+
             else
-                 path = Path.Combine(_env.WebRootPath, "CaseStatusEmail.html");
+                path = Path.Combine(_env.WebRootPath, "CaseStatusEmail.html");
             string content = System.IO.File.ReadAllText(path);
                 message = $@"<p>Please use the below token to verify your email address with the <code>/accounts/verify-email</code> api route:</p>
                              <p><code>{account.Status}</code></p>";
@@ -131,6 +166,132 @@ namespace Medius.DataAccess.Repository
 
             _emailService.SendEmailAsync(account.Appl.Email, subject, content);
 
+        }
+
+        public void sendCaseRegisterEmail(Case account, string email)
+        {
+            string message;
+            string path;
+            string subject = "Case Registration Email";
+
+                path = Path.Combine(_env.WebRootPath, "CaseStatusEmail.html");
+            string content = System.IO.File.ReadAllText(path);
+            message = $@"<p>Hurrah!! you have successfully registered your case</p>
+                             <p><code>{account.Status}</code></p>";
+
+            content = content.Replace("{{status}}", account.Status.ToString());
+            content = content.Replace("{{message}}", message);
+            content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
+
+            _emailService.SendEmailAsync(email, subject, content);
+
+        }
+
+        public async Task<Case> DeleteIP(int id)
+        {
+            var userCase = await GetCase(id);
+            _db.Cases.Remove(userCase);
+            await _db.SaveChangesAsync();
+            return userCase;
+        }
+
+        //Image upload
+        public async Task<Images> UploadedImage(CaseType ipType, IFormFile image)
+        {
+            string filePath = null;
+            if (ipType == CaseType.Patent)
+                filePath = Path.Combine(_env.WebRootPath, "CaseImages", "Patent");
+            else if (ipType == CaseType.Copyright)
+                filePath = Path.Combine(_env.WebRootPath, "CaseImages", "Copyright");
+            else if (ipType == CaseType.Trademark)
+                filePath = Path.Combine(_env.WebRootPath, "CaseImages", "Trademark");
+            else if (ipType == CaseType.Design)
+                filePath = Path.Combine(_env.WebRootPath, "CaseImages", "Design");
+            string fileName;
+            Images images = new Images();
+
+            try
+            {
+                var extension = "." + image.FileName.Split('.')[image.FileName.Split('.').Length - 1];
+                fileName = image.FileName + extension;
+
+                string uniqueFileName = null;
+
+                if (image != null)
+                {
+                    string uploadsFolder = Path.Combine(_env.WebRootPath, filePath);
+                    uniqueFileName = Guid.NewGuid().ToString() + "_" + image.FileName;
+                    if (!Directory.Exists(filePath))
+                    {
+                        Directory.CreateDirectory(filePath);
+                    }
+                    filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(fileStream);
+                    }
+                }
+
+                images = new Images
+                {
+                    ImagePath = filePath,
+                    Image = image
+                };
+            }
+            catch (Exception e)
+            {
+                //log error
+                e.Message.ToString();
+            }
+
+            return images;
+        }
+
+        //document upload
+        public async Task<Document> UploadFile(CaseType ipType, IFormFile file)
+        {
+            var filePath = "";
+            if (ipType == CaseType.Patent)
+                filePath = Path.Combine(_env.WebRootPath, "Documents", "Patent");
+            else if (ipType == CaseType.Copyright)
+                filePath = Path.Combine(_env.WebRootPath, "Documents", "Copyright");
+            else if (ipType == CaseType.Trademark)
+                filePath = Path.Combine(_env.WebRootPath, "Documents", "Trademark");
+            else if (ipType == CaseType.Design)
+                filePath = Path.Combine(_env.WebRootPath, "Documents", "Design");
+
+            string fileName;
+            Document document = new Document();
+            try
+            {
+                var extension = "." + file.FileName.Split('.')[file.FileName.Split('.').Length - 1];
+                //fileName = DateTime.Now.Ticks + extension; //Create a new Name for the file due to security reasons.
+                fileName = file.FileName;
+                if (!Directory.Exists(filePath))
+                {
+                    Directory.CreateDirectory(filePath);
+                }
+
+                var path = Path.Combine(filePath, fileName);
+
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                document = new Document
+                {
+                    DocumentPath = path,
+                    FileDocument = file
+                };
+            }
+            catch (Exception e)
+            {
+                //log error
+                e.Message.ToString();
+            }
+
+            return document;
         }
 
     }

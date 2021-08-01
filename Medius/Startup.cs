@@ -22,6 +22,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Reflection;
 using System.Linq;
 using Castle.Core.Internal;
+using Stripe;
 
 namespace Medius
 {
@@ -112,6 +113,8 @@ namespace Medius
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            StripeConfiguration.SetApiKey(Configuration.GetSection("Stripe")["SecretKey"]);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
