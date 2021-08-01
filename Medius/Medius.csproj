@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>38206faf-15b4-4c25-855d-de5edb00adad</UserSecretsId>
     <!--<UserSecretsId>aspnet-Medius-E2870D88-4EDD-4743-A3EE-19FC52990923</UserSecretsId>-->
   </PropertyGroup>
 
@@ -85,6 +86,9 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\images\ProfileImages\" />
+    <Folder Include="wwwroot\Documents\" />
+    <Folder Include="wwwroot\CaseImages\" />
+    <Folder Include="wwwroot\ProfileImages\" />
   </ItemGroup>
 
 </Project>
