@@ -4,14 +4,16 @@ using Medius.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Medius.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210802131937_adduseridFromstripe")]
+    partial class adduseridFromstripe
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -356,9 +358,13 @@ namespace Medius.DataAccess.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CaseId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("StripePayments");
                 });
@@ -595,6 +601,23 @@ namespace Medius.DataAccess.Migrations
                     b.Navigation("Appl");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Medius.Model.StripePayment", b =>
+                {
+                    b.HasOne("Medius.Model.Case", "Case")
+                        .WithMany()
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Medius.Model.ApplicationUser", "Appl")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Appl");
+
+                    b.Navigation("Case");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

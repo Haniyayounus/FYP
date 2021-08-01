@@ -29,11 +29,13 @@ namespace Medius.Model
         //relationships
             [ForeignKey("CityId")]
             public City City { get; set; }
-            
+        public int CityId { get; set; }
+
             [ForeignKey("ClaimId")]
             public Claims Claim { get; set; }
-            
-            [ForeignKey("IpFilterId")]
+        public int ClaimId { get; set; }
+
+        [ForeignKey("IpFilterId")]
             public IpFilter IpFilter { get; set; }
              public int IpFilterId { get; set; }
 

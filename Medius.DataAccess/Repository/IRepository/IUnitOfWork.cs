@@ -7,6 +7,7 @@ namespace Medius.DataAccess.Repository.IRepository
         ICityRepository City { get; }
         IClaimRepository Claim { get; }
         IFAQRepository FAQ { get; }
+        IStripeRepository Stripe { get; }
         IIpFilterRepository IpFilter { get; }
         void Save();
     }
