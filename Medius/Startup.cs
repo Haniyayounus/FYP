@@ -3,7 +3,6 @@ using Medius.DataAccess.Repository;
 using Medius.DataAccess.Repository.IRepository;
 using Medius.Middleware;
 using Medius.Utility;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -13,16 +12,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.Owin.Security.OAuth;
 using System;
-using AutoMapper;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Server.IIS;
-using Microsoft.AspNetCore.DataProtection;
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
-using System.Reflection;
-using System.Linq;
-using Castle.Core.Internal;
 using Stripe;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Medius
 {
@@ -38,6 +33,7 @@ namespace Medius
         }
 
         public IConfiguration Configuration { get; }
+        public object IdentityServerAuthenticationDefaults { get; private set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -48,9 +44,13 @@ namespace Medius
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
+          
+            // Adding Authentication  
+          
+
             //cors 
             services.AddCors();
-
+            
             //controller
             services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.IgnoreNullValues = true);
 
@@ -73,41 +73,52 @@ namespace Medius
             {
                 options.AutomaticAuthentication = false;
             });
-
             services.Configure<EmailOptions>(Configuration);
             services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
             services.Configure<BrainTreeSettings>(Configuration.GetSection("BrainTree"));
             services.AddSingleton<IBrainTreeGate, BrainTreeGate>();
-            //Twilio Account
-            //var twilioSection =
-            //    Configuration.GetSection("Twilio");
-            //..
-            //services.AddDataProtection()
-            //    .PersistKeysToFileSystem(new System.IO.DirectoryInfo(@"./"))
-                /*.ProtectKeysWithCertificate(GetCertificate())*/
-
+           
             services.AddRazorPages();
-            //services.ConfigureApplicationCookie(options =>
-            //{
-            //    // Cookie settings
-            //    options.Cookie.HttpOnly = true;
-            //    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+            services.ConfigureApplicationCookie(options =>
+            {
+                // Cookie settings
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
 
-            //    options.LoginPath = $"/Identity/Account/Login";
-            //    options.LogoutPath = $"/Identity/Account/Logout";
-            //    options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
-            //    options.SlidingExpiration = true;
-            //});
-            //services.AddSession(options =>
-            //{
-            //    options.IdleTimeout = TimeSpan.FromMinutes(30);
-            //    options.Cookie.HttpOnly = true;
-            //    options.Cookie.IsEssential = true;
-            //});
+                options.LoginPath = $"/api/Account/Login";
+                options.LogoutPath = $"/api/Account/Logout";
+                options.AccessDeniedPath = $"/api/Account/AccessDenied";
+                options.SlidingExpiration = true;
+            });
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Medius", Version = "v1" });
             });
+            #region Authentication
+            services.AddAuthentication(option =>
+            {
+                option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+
+            }).AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {RequireAudience=false,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = false,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = "https://localhost:5001",
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("dbd1d614-aeab-468f-8b71-ee8e1c006da6") //Configuration["JwtToken:SecretKey"]
+                )};
+            });
+            #endregion
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -121,8 +132,7 @@ namespace Medius
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Medius v1"));
             }
-            // migrate database changes on startup (includes initial db creation)
-            //context.Database.Migrate();
+            
 
             app.UseStaticFiles(); // For the wwwroot folder
 
@@ -152,44 +162,6 @@ namespace Medius
                 endpoints.MapControllers();
             });
 
-            // The provider is the only object we need to redefine. See below for the implementation
-
-
-            // Uncomment the following lines to enable logging in with third party login providers
-            //app.UseMicrosoftAccountAuthentication(
-            //    clientId: "",
-            //    clientSecret: "");
-
-            //app.UseTwitterAuthentication(
-            //    consumerKey: "",
-            //    consumerSecret: "");
-
-
         }
-        //private X509Certificate2 GetCertificate()
-        //{
-        //    var assembly = typeof(Startup).GetTypeInfo().Assembly;
-        //    using (Stream stream = assembly.GetManifestResourceStream(assembly.GetManifestResourceNames().FirstOrDefault(r => r.EndsWith("cnblogs.pfx"))))
-
-        //    using (StreamReader reader = new StreamReader(stream))
-        //    {
-        //        string result = reader.ReadToEnd();
-        //        var bytes = new byte[stream.Length];
-        //        stream.Read(bytes, 0, bytes.Length);
-        //        return new X509Certificate2(bytes);
-        //    }
-
-
-        //    //using (var stream = assembly.GetManifestResourceStream(
-        //    //    assembly.GetManifestResourceNames().FirstOrDefault(r => r.EndsWith("cnblogs.pfx"))))
-        //    //{
-        //    //    if (stream == null)
-        //    //        throw new ArgumentNullException(nameof(stream));
-
-        //    //var bytes = new byte[stream.Length];
-        //    //stream.Read(bytes, 0, bytes.Length);
-        ////}
-
-        //}
     }
 }
