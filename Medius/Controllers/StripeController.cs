@@ -1,10 +1,13 @@
-﻿using Medius.DataAccess.Repository.IRepository;
+﻿using Medius.DataAccess.Data;
+using Medius.DataAccess.Repository.IRepository;
+using Medius.Model;
 using Medius.Model.ViewModels;
 using Medius.Models.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Stripe;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Medius.Controllers
@@ -15,11 +18,13 @@ namespace Medius.Controllers
     {
         private readonly ICaseRepository _caserepo;
         private readonly IUnitOfWork _unitofwork;
+        private readonly IApplicationUserRepository _user;
 
-        public StripeController(ICaseRepository caserepo, IUnitOfWork unitofwork)
+        public StripeController(ICaseRepository caserepo, IUnitOfWork unitofwork, IApplicationUserRepository user)
         {
             _caserepo = caserepo;
             _unitofwork = unitofwork;
+            _user = user;
         }
 
         [HttpPost]
@@ -87,6 +92,22 @@ namespace Medius.Controllers
             catch (Exception ex)
             {
                 // Log exception code goes here
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllPaymentDetails()
+        {
+            try
+            {
+
+                var allObj = await _unitofwork.Stripe.GetAllAsync();
+                
+                return StatusCode(StatusCodes.Status200OK, allObj);
+            }
+            catch(Exception ex)
+            {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }

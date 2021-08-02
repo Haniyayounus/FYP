@@ -76,4 +76,14 @@ namespace Medius.Model.ViewModels
         public string Cvc { get; set; }
         
     }
+
+public class PaymentDetailViewModel
+    {
+        public CaseType caseType { get; set; }
+        public Status caseStatus { get; set; }
+        public string userName { get; set; }
+        public long amount { get; set; }
+        public string email { get; set; }
+        public string caseName { get; set; }
+    }
 }

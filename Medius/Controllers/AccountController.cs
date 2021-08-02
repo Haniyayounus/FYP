@@ -98,10 +98,10 @@ namespace Medius.Controllers
             return Ok(new { message = "Registration successful, please check your email for verification instructions" });
             }
 
-            [HttpPost("VerifyEmail")]
-            public IActionResult VerifyEmail(VerifyEmailRequest model)
+            [HttpGet("VerifyEmail")]
+            public IActionResult VerifyEmail(string token)
             {
-            _unitOfWork.VerifyEmail(model.Token);
+            _unitOfWork.VerifyEmail(token);
                 return Ok(new { message = "Verification successful, you can now login" });
             }
 
