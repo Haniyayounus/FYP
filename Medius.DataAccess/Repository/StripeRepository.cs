@@ -25,8 +25,7 @@ namespace Medius.DataAccess.Repository
                 UserId = viewModel.userId,
                 Amount = viewModel.amount
             };
-            var modal = await _db.StripePayments.AddAsync(model);
-            await _db.SaveChangesAsync();
+            _db.StripePayments.Add(model);
             return model;
         }
     }

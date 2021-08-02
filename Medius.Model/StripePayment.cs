@@ -13,11 +13,7 @@ namespace Medius.Model
         public string Email { get; set; }
         public int Amount { get; set; }
         public string Token { get; set; }
-        [ForeignKey("UserId")]
-        public ApplicationUser User { get; set; }
-        public string UserId { get; set; }
-        [ForeignKey("CaseId")]
-        public Case Case { get; set; }
         public int CaseId { get; set; }
+        public string UserId { get; set; }
     }
 }

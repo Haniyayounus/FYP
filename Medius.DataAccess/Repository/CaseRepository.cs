@@ -66,7 +66,7 @@ namespace Medius.DataAccess.Repository
                 Type = viewModel.Type,
                 Contact = viewModel.Contact,
                 Application = viewModel.Application,
-                Status = Status.Draft,
+                Status = Status.Sent,
                 ModeofRegistration = viewModel.ModeofRegistration,
                 ModifiedBy = viewModel.ModifiedBy,
                 ClaimId = viewModel.ClaimId,

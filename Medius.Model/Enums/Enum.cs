@@ -22,7 +22,9 @@ namespace Medius.Models.Enums
 
     public enum Status
     {
-        Draft,
+        Sent,
+        Seen,
+        Processed,
         Pending,
         Reject,
         Publish

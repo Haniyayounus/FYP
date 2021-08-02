@@ -75,6 +75,7 @@ namespace Medius.Controllers
                 {
                     string BalanceTransactionId = charge.BalanceTransactionId;
                     var stipemodel = await _unitofwork.Stripe.AddAsync(viewModel);
+                    _unitofwork.Save();
                     return StatusCode(StatusCodes.Status200OK, BalanceTransactionId);
                 }
                 else
