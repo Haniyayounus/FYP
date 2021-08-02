@@ -3,6 +3,7 @@ using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
 using Medius.Model.ViewModels;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Medius.DataAccess.Repository
@@ -27,6 +28,11 @@ namespace Medius.DataAccess.Repository
             };
             _db.StripePayments.Add(model);
             return model;
+        }
+
+        public async Task<List<StripePayment>> GetAllDetail()
+        {
+            throw new NotImplementedException();
         }
     }
 }

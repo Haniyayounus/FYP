@@ -361,7 +361,7 @@ namespace Medius.DataAccess.Repository
                 }
                 else
                 {
-                    message = $@"<p>Please use the below token to verify your email address with the <code>/accounts/verify-email</code> api route:</p>
+                    message = $@"<p>Please use the below token to verify your email address with the <code>/api/accounts/VerifyEmail</code> api route:</p>
                              <p><code>{account.VerificationToken}</code></p>";
                     content = content.Replace("{{resetToken}}", account.VerificationToken);
                     content = content.Replace("{{message}}", message);
@@ -376,7 +376,7 @@ namespace Medius.DataAccess.Repository
                 content = System.IO.File.ReadAllText(path);
                 if (!string.IsNullOrEmpty(origin))
                 {
-                    var resetToken = $"{origin}/account/VerifyEmail?token={account.VerificationToken}";
+                    var resetToken = $"{origin}/api/account/VerifyEmail?token={account.VerificationToken}";
                     message = $@"<p>Please click the below link to verify your email address:</p>
                              <p><a href=""{resetToken}"">{resetToken}</a></p>";
                     content = content.Replace("{{resetToken}}", resetToken);
@@ -386,7 +386,7 @@ namespace Medius.DataAccess.Repository
                 }
                 else
                 {
-                    message = $@"<p>Please use the below token to verify your email address with the <code>/accounts/verify-email</code> api route:</p>
+                    message = $@"<p>Please use the below token to verify your email address with the <code>/api/accounts/verify-email</code> api route:</p>
                              <p><code>{account.VerificationToken}</code></p>";
 
                     content = content.Replace("{{resetToken}}", account.VerificationToken);
@@ -443,6 +443,12 @@ namespace Medius.DataAccess.Repository
             }
             _emailService.SendEmailAsync(account.Email, subject, content);
 
+        }
+
+        public ApplicationUser GetUser(string id)
+        {
+            var account = getAccount(id);
+            return account;
         }
     }
 }
