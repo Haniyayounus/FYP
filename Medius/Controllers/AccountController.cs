@@ -1,5 +1,4 @@
-﻿using AutoMapper.Configuration;
-using Medius.DataAccess.Data;
+﻿using Medius.DataAccess.Data;
 using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
 using Medius.Model.ViewModels;
@@ -15,9 +14,7 @@ using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using AutoMapper;
-using System.IO;
 using Microsoft.AspNetCore.Hosting;
 
 namespace Medius.Controllers
@@ -173,6 +170,7 @@ namespace Medius.Controllers
                 return Ok(new { message = "Token is valid" });
             }
 
+            [Authorize]
             [HttpPost("ResetPassword")]
             public IActionResult ResetPassword(ResetPasswordRequest model)
             {
@@ -193,8 +191,8 @@ namespace Medius.Controllers
             public ActionResult<AccountResponse> GetById(string id)
             {
                 // users can get their own account and admins can get any account
-                if (id != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
-                    return Unauthorized(new { message = "Unauthorized" });
+                //if (id != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
+                //    return Unauthorized(new { message = "Unauthorized" });
 
                 var account = _unitOfWork.GetById(id);
                 return Ok(account);
@@ -213,8 +211,8 @@ namespace Medius.Controllers
             public ActionResult<AccountResponse> Update(string id, UpdateRequest model)
             {
                 // users can update their own account and admins can update any account
-                if (id != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
-                    return Unauthorized(new { message = "Unauthorized" });
+                //if (id != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
+                //    return Unauthorized(new { message = "Unauthorized" });
 
                 // only admins can update role
                 if (ApplicationUser.Role != Role.Admin)
@@ -235,90 +233,94 @@ namespace Medius.Controllers
             _unitOfWork.Delete(userId);
                 return Ok(new { message = "Account deleted successfully" });
             }
-        [Authorize(Role.Admin)]
-        [HttpPut("Archive/{Id}")]
-        public async Task<IActionResult> Archive(string userId)
-        {
+            [Authorize]
+            [HttpPut("Archive/{Id}")]
+            public async Task<IActionResult> Archive(string userId)
+            {
             //// users can delete their own account and admins can delete any account
-            //if (adminId != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
-            //    return Unauthorized(new { message = "Unauthorized" });
+            if (userId != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
+                return Unauthorized(new { message = "Unauthorized" });
+
 
             await _unitOfWork.ArchiveUser(userId);
-            return StatusCode(StatusCodes.Status200OK, "Account archived successfully" );
-        }
-
-
-        //Two Factor Authentication
-        [HttpGet]
-        [Route("SendUserOtp")]
-        public async Task<IActionResult> SendUserOtp(string id)
-        {
-            try
-            {
-                var code = StringUtility.GenerateVerificationCode(4);
-                var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id);
-
-                // always return ok response to prevent email enumeration
-                if (account == null) return null;
-
-                // create reset token that expires after 1 day
-                account.OTP = code;
-                account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
-
-                _db.ApplicationUsers.Update(account);
-                _db.SaveChanges();
-                // SMS Service
-                var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
-                var authToken = ("dfab050cf9cbf3e5db5eae6842aa65d4");
-                var from = ("+14848044359");
-                var to = account.PhoneNumber;
-                TwilioClient.Init(accountSid, authToken);
-
-                var message = await MessageResource.CreateAsync
-                    (
-                    to: to,
-                    from: from,
-                    body: "Your medius security code is " + account.OTP
-                    );
-                return StatusCode(StatusCodes.Status200OK, code);
+                return StatusCode(StatusCodes.Status200OK, "Account archived successfully" );
             }
-            catch (Exception ex)
-            {
-                // Log exception code goes here
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
 
-        [HttpPost]
-        [Route("AuthenticateUserOTP")]
-        public async Task<IActionResult> AuthenticateUserOTP(string id, string OTP)
-        {
-            try
-            {
-                var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id && x.OTP == OTP);
 
-                // always return ok response to prevent email enumeration
-                if (account == null) return null;
-
-                return StatusCode(StatusCodes.Status200OK, account);
-            }
-            catch (Exception ex)
+            //Two Factor Authentication
+            [Authorize]
+            [HttpGet]
+            [Route("SendUserOtp")]
+            public async Task<IActionResult> SendUserOtp(string id)
             {
-                // Log exception code goes here
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
-
-        // helper methods
-        private void setTokenCookie(string token)
-            {
-                var cookieOptions = new CookieOptions
+                try
                 {
-                    HttpOnly = true,
-                    Expires = DateTime.UtcNow.AddDays(7)
-                };
-                Response.Cookies.Append("refreshToken", token, cookieOptions);
+                    var isAuthenticated = User.Identity.IsAuthenticated;
+                    var code = StringUtility.GenerateVerificationCode(4);
+                    var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id);
+
+                    // always return ok response to prevent email enumeration
+                    if (account == null) return null;
+
+                    // create reset token that expires after 1 day
+                    account.OTP = code;
+                    account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
+
+                    _db.ApplicationUsers.Update(account);
+                    _db.SaveChanges();
+                    // SMS Service
+                    var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
+                    var authToken = ("dfab050cf9cbf3e5db5eae6842aa65d4");
+                    var from = ("+14848044359");
+                    var to = account.PhoneNumber;
+                    TwilioClient.Init(accountSid, authToken);
+
+                    var message = await MessageResource.CreateAsync
+                        (
+                        to: to,
+                        from: from,
+                        body: "Your medius security code is " + account.OTP
+                        );
+                    return StatusCode(StatusCodes.Status200OK, code);
+                }
+                catch (Exception ex)
+                {
+                    // Log exception code goes here
+                    return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                }
             }
+
+            [Authorize]
+            [HttpPost]
+            [Route("AuthenticateUserOTP")]
+            public async Task<IActionResult> AuthenticateUserOTP(string id, string OTP)
+            {
+                try
+                {
+                    var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id && x.OTP == OTP);
+
+                    // always return ok response to prevent email enumeration
+                    if (account == null) return null;
+
+                    return StatusCode(StatusCodes.Status200OK, account);
+                }
+                catch (Exception ex)
+                {
+                    // Log exception code goes here
+                    return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+                }
+            }
+
+            // helper methods
+            private void setTokenCookie(string token)
+                {
+                    var cookieOptions = new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Expires = DateTime.UtcNow.AddDays(7)
+                    };
+                    Response.Cookies.Append("refreshToken", token, cookieOptions);
+                }
 
             private string ipAddress()
             {

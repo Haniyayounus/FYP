@@ -32,10 +32,10 @@ namespace Medius.Controllers
         }
 
         [HttpPost, Route("api/ProfilePicture/UploadProfileImage/")]
-        public async Task<IActionResult> UploadProfileImage(string email, IFormFile file)
+        public async Task<IActionResult> UploadProfileImage(string id, IFormFile file)
         {
             //get user by email
-            var user = _db.Users.FirstOrDefault(m => m.Email == email);
+            var user = _db.Users.FirstOrDefault(m => m.Id == id);
 
             if (user != null && file.Length > 0)
             {

@@ -300,7 +300,7 @@ namespace Medius.DataAccess.Repository
         private string generateJwtToken(ApplicationUser account)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("bb2a1d51-c7bf-4e6f-b56e-d9e62c09f865");
+            var key = Encoding.ASCII.GetBytes("dbd1d614-aeab-468f-8b71-ee8e1c006da6");
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[] { new Claim("id", account.Id.ToString()) }),

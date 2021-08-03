@@ -33,7 +33,7 @@ namespace Medius.Middleware
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes("bb2a1d51-c7bf-4e6f-b56e-d9e62c09f865");
+                var key = Encoding.ASCII.GetBytes("dbd1d614-aeab-468f-8b71-ee8e1c006da6");
                 tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
@@ -45,12 +45,12 @@ namespace Medius.Middleware
                 }, out SecurityToken validatedToken);
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
-                var accountId = int.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
+                var accountId = jwtToken.Claims.First(x => x.Type == "id").Value;
 
                 // attach account to context on successful jwt validation
                 context.Items["ApplicationUser"] = await dataContext.ApplicationUsers.FindAsync(accountId);
             }
-            catch
+            catch(Exception ex)
             {
                 // do nothing if jwt validation fails
                 // account is not attached to context so request won't have access to secure routes
