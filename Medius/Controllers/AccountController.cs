@@ -25,19 +25,11 @@ namespace Medius.Controllers
     {
             private readonly IApplicationUserRepository _unitOfWork;
             private readonly ApplicationDbContext _db;
-            private readonly IMapper _mapper; 
-        private readonly IHostingEnvironment _env;
-        private readonly EmailSender _emailService;
 
 
-        public AccountController(IApplicationUserRepository unitOfWork, IMapper mapper, ApplicationDbContext db,
-            IHostingEnvironment env, EmailSender emailService)
+        public AccountController(IApplicationUserRepository unitOfWork, ApplicationDbContext db)
             {
                 _unitOfWork = unitOfWork;
-                _mapper = mapper;
-                _db = db;
-            _env = env;
-            _emailService = emailService;
             }
 
             [HttpPost("Login")]
@@ -107,7 +99,7 @@ namespace Medius.Controllers
             {
             if (model.mode == "SMS")
             {
-                var code = StringUtility.GenerateVerificationCode(4);
+                var code = StringUtility.GenerateVerificationCode(6);
                 var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Email == model.Email);
 
                 // always return ok response to prevent email enumeration
@@ -147,6 +139,7 @@ namespace Medius.Controllers
             }
         }
 
+            [Authorize]
             [HttpPut]
             [Route("ChangePassword")]
             public async Task<IActionResult> ChangePassword(ChangePassword model)
@@ -154,7 +147,7 @@ namespace Medius.Controllers
                 try
                 {
                     var data = await _unitOfWork.ChangePassword(model);
-                    return StatusCode(StatusCodes.Status200OK, data);
+                    return StatusCode(StatusCodes.Status200OK, "Password change successfully");
                 }
                 catch (Exception ex)
                 {
@@ -170,7 +163,6 @@ namespace Medius.Controllers
                 return Ok(new { message = "Token is valid" });
             }
 
-            [Authorize]
             [HttpPost("ResetPassword")]
             public IActionResult ResetPassword(ResetPasswordRequest model)
             {
@@ -190,10 +182,6 @@ namespace Medius.Controllers
             [HttpGet("GetById")]
             public ActionResult<AccountResponse> GetById(string id)
             {
-                // users can get their own account and admins can get any account
-                //if (id != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
-                //    return Unauthorized(new { message = "Unauthorized" });
-
                 var account = _unitOfWork.GetById(id);
                 return Ok(account);
             }
@@ -210,14 +198,6 @@ namespace Medius.Controllers
             [HttpPut("Update")]
             public ActionResult<AccountResponse> Update(string id, UpdateRequest model)
             {
-                // users can update their own account and admins can update any account
-                //if (id != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
-                //    return Unauthorized(new { message = "Unauthorized" });
-
-                // only admins can update role
-                if (ApplicationUser.Role != Role.Admin)
-                    model.Role = null;
-
                 var account = _unitOfWork.Update(id, model);
                 return Ok(account);
             }
@@ -256,7 +236,7 @@ namespace Medius.Controllers
                 try
                 {
                     var isAuthenticated = User.Identity.IsAuthenticated;
-                    var code = StringUtility.GenerateVerificationCode(4);
+                    var code = StringUtility.GenerateVerificationCode(6);
                     var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id);
 
                     // always return ok response to prevent email enumeration

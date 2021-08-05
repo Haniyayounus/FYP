@@ -162,7 +162,7 @@ namespace Medius.DataAccess.Repository
             if (account == null) return null;
 
             // create reset token that expires after 1 day
-            account.ResetToken = randomTokenString();
+            account.ResetToken = StringUtility.GenerateVerificationCode(6);
             account.ResetTokenExpires = DateTime.UtcNow.AddDays(1);
 
             _db.ApplicationUsers.Update(account);
@@ -176,7 +176,6 @@ namespace Medius.DataAccess.Repository
             string subject = "Hello and Welcome to Medius !";
 
             _emailService.SendEmailAsync(model.Email, subject, content);
-
             return account.ResetToken;
         }
 
@@ -250,10 +249,6 @@ namespace Medius.DataAccess.Repository
             // validate
             if (account.Email != model.Email && _db.ApplicationUsers.Any(x => x.Email == model.Email))
                 throw new AppException($"Email '{model.Email}' is already taken");
-
-            // hash password if it was entered
-            if (!string.IsNullOrEmpty(model.Password))
-                account.PasswordHash = BC.HashPassword(model.Password);
 
             // copy model to account and save
             _mapper.Map(model, account);
