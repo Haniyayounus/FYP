@@ -30,12 +30,18 @@ namespace Medius.Controllers
             _db = db;
             _env = env;
         }
-
-        [HttpPost, Route("api/ProfilePicture/UploadProfileImage/")]
+        [HttpPost]
+        [Route("UploadProfileImage")]
         public async Task<IActionResult> UploadProfileImage(string id, IFormFile file)
         {
+            if (id == null || id == "")
+                return StatusCode(StatusCodes.Status404NotFound, "UserId can't be null");
+
+            if (file == null || file.Length == 0)
+                return StatusCode(StatusCodes.Status404NotFound, "File is empty");
             //get user by email
-            var user = _db.Users.FirstOrDefault(m => m.Id == id);
+        try{
+                var user = _db.Users.FirstOrDefault(m => m.Id == id);
 
             if (user != null && file.Length > 0)
             {
@@ -84,11 +90,12 @@ namespace Medius.Controllers
                 {
                     System.IO.File.Delete(filePath);
                 }
+                
                 // convert string to stream
-                byte[] byteArray = Encoding.UTF8.GetBytes(filePath);
-                //byte[] byteArray = Encoding.ASCII.GetBytes(contents);
-                MemoryStream stream = new MemoryStream(byteArray);
-                await file.CopyToAsync(stream);
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
 
                 if (user != null)
                 {
@@ -97,7 +104,12 @@ namespace Medius.Controllers
                     _db.SaveChanges();
                 }
             }
-            return StatusCode(StatusCodes.Status200OK);
+            return StatusCode(StatusCodes.Status200OK, "Profile picture updated successfully");
+        }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
     }
 }
