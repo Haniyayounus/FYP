@@ -194,7 +194,7 @@ namespace Medius.Controllers
             }
 
             [Authorize(Role.Admin)]
-            [HttpPost]
+            [HttpPost("CreateSubAdmin")]
             public ActionResult<AccountResponse> CreateSubAdmin(CreateRequest model)
             {
                 var account = _unitOfWork.Create(model);
