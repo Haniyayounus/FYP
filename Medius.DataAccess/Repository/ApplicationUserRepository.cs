@@ -167,23 +167,16 @@ namespace Medius.DataAccess.Repository
 
             _db.ApplicationUsers.Update(account);
             _db.SaveChanges();
-            // Email Service
-            //EmailService service = new EmailService();
-            string path = Path.Combine(_env.WebRootPath, "VerificationCode.html");
-            string content = System.IO.File.ReadAllText(path);
-            content = content.Replace("{{resetToken}}", account.ResetToken);
-            content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
-            string subject = "Hello and Welcome to Medius !";
-
-            _emailService.SendEmailAsync(model.Email, subject, content);
+            
+            sendPasswordResetEmail(account, origin);
             return account.ResetToken;
         }
 
 
-        public void ValidateResetToken(ValidateResetTokenRequest model)
+        public void ValidateResetToken(string resetToken)
         {
             var account = _db.ApplicationUsers.SingleOrDefault(x =>
-                x.ResetToken == model.Token &&
+                x.ResetToken == resetToken &&
                 x.ResetTokenExpires > DateTime.UtcNow);
 
             if (account == null)
@@ -417,25 +410,13 @@ namespace Medius.DataAccess.Repository
             string subject = "Reset Password";
             string path = Path.Combine(_env.WebRootPath, "PasswordResetEmail.html");
             string content = System.IO.File.ReadAllText(path);
-            if (!string.IsNullOrEmpty(origin))
-            {
-                var resetUrl = $"{origin}/api/account/reset-password?token={account.ResetToken}";
-                message = $@"<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
-                             <p><a href=""{resetUrl}"">{resetUrl}</a></p>";
+           
+                message = $@"<p>A request has been received to change the password for your Medius account, the link will be valid for 1 day:</p>";
+                content = content.Replace("{{uerName}}", account.UserName);
                 content = content.Replace("{{resetToken}}", account.ResetToken);
                 content = content.Replace("{{message}}", message);
                 content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
 
-            }
-            else
-            {
-                message = $@"<p>Please use the below token to reset your password with the <code>/accounts/reset-password</code> api route:</p>
-                             <p><code>{account.ResetToken}</code></p>";
-                content = content.Replace("{{resetToken}}", account.ResetToken);
-                content = content.Replace("{{message}}", message);
-                content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
-
-            }
             _emailService.SendEmailAsync(account.Email, subject, content);
 
         }
