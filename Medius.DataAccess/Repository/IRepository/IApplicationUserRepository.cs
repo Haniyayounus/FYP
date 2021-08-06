@@ -15,7 +15,7 @@ namespace Medius.DataAccess.Repository.IRepository
         ApplicationUser Register(RegisterRequest model, string origin);
         void VerifyEmail(string token);
         string ForgotPassword(ForgotPasswordRequest model, string origin);
-        void ValidateResetToken(ValidateResetTokenRequest model);
+        void ValidateResetToken(string resetToken);
         void ResetPassword(ResetPasswordRequest model);
         IEnumerable<AccountResponse> GetAll();
         AccountResponse GetById(string id);

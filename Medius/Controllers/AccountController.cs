@@ -156,11 +156,18 @@ namespace Medius.Controllers
                 }
             }
             
-            [HttpPost("ValidateResetToken")]
-            public IActionResult ValidateResetToken(ValidateResetTokenRequest model)
+            [HttpGet("ValidateResetToken")]
+            public IActionResult ValidateResetToken(string resetToken)
             {
-            _unitOfWork.ValidateResetToken(model);
-                return Ok(new { message = "Token is valid" });
+            try
+            {
+                _unitOfWork.ValidateResetToken(resetToken);
+                return StatusCode(StatusCodes.Status200OK, "Token is valid" );
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
             }
 
             [HttpPost("ResetPassword")]
