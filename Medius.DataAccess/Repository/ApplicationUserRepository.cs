@@ -151,7 +151,7 @@ namespace Medius.DataAccess.Repository
             
         }
 
-        public void VerifyEmail(string token)
+        public ApplicationUser VerifyEmail(string token)
         {
             var account = _db.ApplicationUsers.SingleOrDefault(x => x.VerificationToken == token);
 
@@ -162,6 +162,7 @@ namespace Medius.DataAccess.Repository
 
             _db.ApplicationUsers.Update(account);
             _db.SaveChanges();
+                return account;
         }
 
         public string ForgotPassword(ForgotPasswordRequest model, string origin)
