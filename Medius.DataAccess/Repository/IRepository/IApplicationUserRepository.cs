@@ -13,7 +13,7 @@ namespace Medius.DataAccess.Repository.IRepository
         void RevokeToken(string token, string ipAddress);
         Task<AuthenticateResponse> ChangePassword(ChangePassword model);
         ApplicationUser Register(RegisterRequest model, string origin);
-        void VerifyEmail(string token);
+        ApplicationUser VerifyEmail(string token);
         string ForgotPassword(ForgotPasswordRequest model, string origin);
         void ValidateResetToken(string resetToken);
         void ResetPassword(ResetPasswordRequest model);

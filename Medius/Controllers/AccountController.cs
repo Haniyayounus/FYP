@@ -16,6 +16,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Medius.Controllers
 {
@@ -25,11 +28,13 @@ namespace Medius.Controllers
     {
             private readonly IApplicationUserRepository _unitOfWork;
             private readonly ApplicationDbContext _db;
+        private readonly IWebHostEnvironment _env;
 
 
-        public AccountController(IApplicationUserRepository unitOfWork, ApplicationDbContext db)
+        public AccountController(IApplicationUserRepository unitOfWork, ApplicationDbContext db, IWebHostEnvironment env)
             {
                 _unitOfWork = unitOfWork;
+            _env = env;
             }
 
             [HttpPost("Login")]
@@ -73,18 +78,55 @@ namespace Medius.Controllers
 
             [HttpPost("Register")]
             public IActionResult Register(RegisterRequest model)
-        {   
-            var account = _unitOfWork.Register(model, Request.Headers["origin"]);
-            return Ok(new { message = "Registration successful, please check your email for verification instructions" });
-            }
-
-            [HttpGet("VerifyEmail")]
-            public IActionResult VerifyEmail(string token)
             {
-            _unitOfWork.VerifyEmail(token);
-                return Ok(new { message = "Verification successful, you can now login" });
+            try
+            {
+                var account = _unitOfWork.Register(model, Request.Headers["origin"]);
+                return StatusCode(StatusCodes.Status200OK, "Registration successful, please check your email for verification instructions");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status200OK, ex.Message);
+            }
             }
 
+        [HttpGet("VerifyEmail")]
+        public ContentResult VerifyEmail(string token)
+        {
+            try
+            {
+                var account = _unitOfWork.VerifyEmail(token);
+
+                if (account.Role == Role.SubAdmin)
+                {
+                    return base.Content("<img src='https://raw.githubusercontent.com/Haniyayounus/FYP/logo/circlecheck.png'"
+                       + "style='width: 30%; height:50%; margin-left:35%;'/><p style='text-align:center; font - size:22px;'>Congratulations!</p>"
+                       + "<p style = 'text-align: center; font-size:22px;'> You've successfully accepted the invitation.</p>"
+                       + "<div class='modal-footer'>"
+                       + "<a type='button' href='https://meet.google.com/szj-foaj-bek' style='background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; margin-left: 45%'>"
+                       + "Login Now</a><br /><br /></div>", "text/html");
+                }
+                else if (account.Role == Role.User)
+                {
+                    return base.Content("<img src='https://raw.githubusercontent.com/Haniyayounus/FYP/logo/circlecheck.png'"
+                       + "style='width: 30%; height:50%; margin-left:35%;'/><p style='text-align:center; font - size:22px;'>Congratulations!</p>"
+                       + "<p style = 'text-align: center; font-size:22px;'> You've successfully accepted the invitation.</p>"
+                       + "<div class='modal-footer'>"
+                       +"<br /><br /></div>", "text/html");
+                }
+                else
+                {
+                    return base.Content("Sorry something went wrong");
+                }
+            }
+            catch(Exception ex)
+            {
+                return base.Content(ex.Message);
+            }
+
+            //File("~/Images/photo.jpg", "image/jpeg");
+            //return StatusCode(StatusCodes.Status200OK, );
+        }
             [HttpPost("ForgotPassword")]
             public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest model)
             {
