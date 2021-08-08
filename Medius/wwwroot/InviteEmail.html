@@ -1,4 +1,6 @@
-﻿<div>
+﻿<link href="lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+
+<div>
     <div class="_3U2q6dcdZCrTrR_42Nxby JWNdg1hee9_Rz6bIGvG1c allowTextSelection">
         <div>
             <style type="text/css">
@@ -490,7 +492,7 @@
                                                                             <tbody>
                                                                                 <tr>
                                                                                     <td valign="top" class="x_mcnTextContent" style="padding: 0px 18px 9px; font-family: &quot;Times New Roman&quot;, Times, Baskerville, Georgia, serif; word-break: break-word; color: rgb(32, 32, 32); font-size: 16px; line-height: 150%; text-align: left;">
-                                                                                        <div style="text-align:center"><span style="color: rgb(0, 0, 0);"><span style="font-size:32px"><strong>Welcome to Medius!&nbsp;</strong></span></span></div>
+                                                                                        <div style="text-align:center"><span style="color: rgb(0, 0, 0);"><span style="font-size:32px"><strong>You're invited to Medius Portal&nbsp;</strong></span></span></div>
                                                                                     </td>
                                                                                 </tr>
                                                                             </tbody>
@@ -507,17 +509,24 @@
                                                                             <tbody>
                                                                                 <tr>
                                                                                     <td valign="top" class="x_mcnTextContent" style="padding: 0px 18px 9px; word-break: break-word; color: rgb(32, 32, 32); font-family: Helvetica; font-size: 16px; line-height: 150%; text-align: left;">
-                                                                                        <span style="font-size:18px">Start using the Medius app!</span>
                                                                                         <p style="margin: 10px 0px; padding: 0px; color: rgb(32, 32, 32); font-family: Helvetica; font-size: 16px; line-height: 150%; text-align: left;">
                                                                                             <span style="font-size:18px">
-                                                                                                <strong>We're excited to have you get started. First, you need to confirm your account. Just press the button below.</strong>
-
+                                                                                                <p>{{adminName}} invited you to collaborate on Medius as a <strong>Sub Admin</strong>.</p>
+                                                                                                <p>You can accept this invitation by clicking the below button</p>
+                                                                                                <p>Your credentials are:</p>
+                                                                                                <p>Username: {{userName}}</p>
+                                                                                                <p>Password: {{password}}</p>
                                                                                             </span><br>
-                                                                                            <center><strong style="font-size:24px">{{verificationToken}}</strong></center>
-                                                                                        <p>{{message}}</p>
-                                                                                        <br />
-                                                                                        <br>
-                                                                                        <br>
+                                                                                            <!-- Button trigger modal -->
+                                                                                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong" onclick="window.location='{{resetToken}}'" style="margin-left: 40%">
+                                                                                                Accept Invitation
+                                                                                            </button><br /><br />
+                                                                                            <center><strong style="font-size:24px">{{resetToken}}</strong></center>
+                                                                                            <!--<p>{{message}}</p>-->
+
+                                                                                            <br />
+                                                                                            <br>
+                                                                                            <br>
                                                                                         </p>
                                                                                     </td>
                                                                                 </tr>
@@ -757,4 +766,26 @@
             </div>
         </div>
     </div><div class="_1yuNDaQBDoy0YwHOMGXFkz"></div>
+</div>
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="align-items:center; height:50% !important; margin-top:20%">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="margin-left: 95%;">
+                <span aria-hidden="true">&times;</span>
+            </button>
+
+            <i class="fas fa-check-circle fa-10x" style="color:green"></i><br />
+            <p>Congratulations!</p>
+            <p>You've successfully accepted the invitation.</p>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="window.location ='https://meet.google.com/szj-foaj-bek'">
+                    Login Now
+                </button><br /><br />
+            </div>
+        </div>
+    </div>
 </div>

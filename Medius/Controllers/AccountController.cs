@@ -73,16 +73,7 @@ namespace Medius.Controllers
 
             [HttpPost("Register")]
             public IActionResult Register(RegisterRequest model)
-        {
-            
-            // validate
-            if (_db.ApplicationUsers.Any(x => x.Email == model.Email))
-            {
-                return Ok(
-                    new { 
-                        message = "Email already Registered" });
-
-            }
+        {   
             var account = _unitOfWork.Register(model, Request.Headers["origin"]);
             return Ok(new { message = "Registration successful, please check your email for verification instructions" });
             }
@@ -205,12 +196,19 @@ namespace Medius.Controllers
             [HttpPut("Update")]
             public ActionResult<AccountResponse> Update(string id, UpdateRequest model)
             {
+            try
+            {
                 var account = _unitOfWork.Update(id, model);
                 return Ok(account);
             }
+                catch(Exception ex)
+            {
+                return Ok(ex.Message);
+            }
+            }
 
             [Authorize]
-            [HttpDelete("Delete/{Id}")]
+            [HttpDelete("Delete")]
             public IActionResult Delete(string adminId, string userId)
             {
                 // users can delete their own account and admins can delete any account
@@ -244,20 +242,21 @@ namespace Medius.Controllers
                 {
                     var isAuthenticated = User.Identity.IsAuthenticated;
                     var code = StringUtility.GenerateVerificationCode(6);
-                    var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id);
+                    var account = _unitOfWork.GetUser(id);
 
                     // always return ok response to prevent email enumeration
                     if (account == null) return null;
 
+                
                     // create reset token that expires after 1 day
-                    account.OTP = code;
-                    account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
+                    //account.OTP = code;
+                    //account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
 
-                    _db.ApplicationUsers.Update(account);
-                    _db.SaveChanges();
+                _unitOfWork.UpdateOTP(id, code);
+                    //_db.SaveChanges();
                     // SMS Service
                     var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
-                    var authToken = ("dfab050cf9cbf3e5db5eae6842aa65d4");
+                    var authToken = ("2bd7f5e7012b95a68a3e9062938bc207");
                     var from = ("+14848044359");
                     var to = account.PhoneNumber;
                     TwilioClient.Init(accountSid, authToken);
@@ -278,18 +277,17 @@ namespace Medius.Controllers
             }
 
             [Authorize]
-            [HttpPost]
+            [HttpGet]
             [Route("AuthenticateUserOTP")]
             public async Task<IActionResult> AuthenticateUserOTP(string id, string OTP)
             {
                 try
                 {
-                    var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id && x.OTP == OTP);
+                var account = _unitOfWork.GetUser(id);
+                if(account.OTP != OTP)
+                    return StatusCode(StatusCodes.Status404NotFound, "Incorrect OTP");
 
-                    // always return ok response to prevent email enumeration
-                    if (account == null) return null;
-
-                    return StatusCode(StatusCodes.Status200OK, account);
+                    return StatusCode(StatusCodes.Status200OK, "OTP Verified");
                 }
                 catch (Exception ex)
                 {

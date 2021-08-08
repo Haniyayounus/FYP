@@ -23,6 +23,7 @@ namespace Medius.DataAccess.Repository.IRepository
         AccountResponse Update(string id, UpdateRequest model);
         void Delete(string id);
         ApplicationUser GetUser(string id);
+        ApplicationUser UpdateOTP(string id, string OTP);
         Task<AccountResponse> ArchiveUser(string id);
     }
 }
