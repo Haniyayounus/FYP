@@ -73,16 +73,7 @@ namespace Medius.Controllers
 
             [HttpPost("Register")]
             public IActionResult Register(RegisterRequest model)
-        {
-            
-            // validate
-            if (_db.ApplicationUsers.Any(x => x.Email == model.Email))
-            {
-                return Ok(
-                    new { 
-                        message = "Email already Registered" });
-
-            }
+        {   
             var account = _unitOfWork.Register(model, Request.Headers["origin"]);
             return Ok(new { message = "Registration successful, please check your email for verification instructions" });
             }
@@ -113,7 +104,7 @@ namespace Medius.Controllers
                 _db.SaveChanges();
                 // SMS Service
                 var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
-                var authToken = ("dfab050cf9cbf3e5db5eae6842aa65d4");
+                var authToken = ("");
                 var from = ("+14848044359");
                 var to = account.PhoneNumber;
                 TwilioClient.Init(accountSid, authToken);
@@ -173,8 +164,15 @@ namespace Medius.Controllers
             [HttpPost("ResetPassword")]
             public IActionResult ResetPassword(ResetPasswordRequest model)
             {
-            _unitOfWork.ResetPassword(model);
-                return Ok(new { message = "Password reset successful, you can now login" });
+            try
+            {
+                _unitOfWork.ResetPassword(model);
+                return StatusCode(StatusCodes.Status200OK, "Password reset successful, you can now login" );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status200OK, ex.Message);
+            }
             }
 
             [Authorize(Role.Admin)]
@@ -193,24 +191,23 @@ namespace Medius.Controllers
                 return Ok(account);
             }
 
-            [Authorize(Role.Admin)]
-            [HttpPost("CreateSubAdmin")]
-            public ActionResult<AccountResponse> CreateSubAdmin(CreateRequest model)
-            {
-                var account = _unitOfWork.Create(model);
-                return Ok(account);
-            }
-
             [Authorize]
             [HttpPut("Update")]
             public ActionResult<AccountResponse> Update(string id, UpdateRequest model)
             {
+            try
+            {
                 var account = _unitOfWork.Update(id, model);
                 return Ok(account);
             }
+                catch(Exception ex)
+            {
+                return Ok(ex.Message);
+            }
+            }
 
             [Authorize]
-            [HttpDelete("Delete/{Id}")]
+            [HttpDelete("Delete")]
             public IActionResult Delete(string adminId, string userId)
             {
                 // users can delete their own account and admins can delete any account
@@ -244,20 +241,21 @@ namespace Medius.Controllers
                 {
                     var isAuthenticated = User.Identity.IsAuthenticated;
                     var code = StringUtility.GenerateVerificationCode(6);
-                    var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id);
+                    var account = _unitOfWork.GetUser(id);
 
                     // always return ok response to prevent email enumeration
                     if (account == null) return null;
 
+                
                     // create reset token that expires after 1 day
-                    account.OTP = code;
-                    account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
+                    //account.OTP = code;
+                    //account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
 
-                    _db.ApplicationUsers.Update(account);
-                    _db.SaveChanges();
+                _unitOfWork.UpdateOTP(id, code);
+                    //_db.SaveChanges();
                     // SMS Service
                     var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
-                    var authToken = ("dfab050cf9cbf3e5db5eae6842aa65d4");
+                    var authToken = ("");
                     var from = ("+14848044359");
                     var to = account.PhoneNumber;
                     TwilioClient.Init(accountSid, authToken);
@@ -278,18 +276,17 @@ namespace Medius.Controllers
             }
 
             [Authorize]
-            [HttpPost]
+            [HttpGet]
             [Route("AuthenticateUserOTP")]
             public async Task<IActionResult> AuthenticateUserOTP(string id, string OTP)
             {
                 try
                 {
-                    var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Id == id && x.OTP == OTP);
+                var account = _unitOfWork.GetUser(id);
+                if(account.OTP != OTP)
+                    return StatusCode(StatusCodes.Status404NotFound, "Incorrect OTP");
 
-                    // always return ok response to prevent email enumeration
-                    if (account == null) return null;
-
-                    return StatusCode(StatusCodes.Status200OK, account);
+                    return StatusCode(StatusCodes.Status200OK, "OTP Verified");
                 }
                 catch (Exception ex)
                 {

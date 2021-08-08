@@ -118,6 +118,10 @@ namespace Medius.DataAccess.Repository
         public ApplicationUser Register(RegisterRequest model, string origin)
         {
 
+            bool existingEmail = _db.Users.Any(x => x.Email == model.Email);
+            if (existingEmail)
+                throw new Exception("Email already Registered");
+
             // map model to new account object
             model.UserName = model.FirstName + ' ' + model.LastName;
             var account = _mapper.Map<ApplicationUser>(model);
@@ -256,7 +260,7 @@ namespace Medius.DataAccess.Repository
 
         private ApplicationUser getAccount(string id)
         {
-            var account = _db.ApplicationUsers.Find(id);
+            var account = _db.Users.SingleOrDefault(x => x.Id == id);
             if (account == null) throw new KeyNotFoundException("Account not found");
             return account;
         }
@@ -351,18 +355,25 @@ namespace Medius.DataAccess.Repository
             string subject;
             string path;
             string content;
-            
+
+            var getAdmin = _db.Users.SingleOrDefault(x => x.Role == Role.Admin);
+            account.PasswordHash = base64Decode(account.PasswordHash);
+            var adminName = getAdmin.UserName;
                 subject = "Invite Email";
                 path = Path.Combine(_env.WebRootPath, "InviteEmail.html");
                 content = System.IO.File.ReadAllText(path);
                 if (!string.IsNullOrEmpty(origin))
                 {
                     var resetToken = $"{origin}/api/account/VerifyEmail?token={account.VerificationToken}";
-                    message = $@"<p>Please click the below link to verify your email address:</p>
-                             <p><a href=""{resetToken}"">{resetToken}</a></p>";
+                    //message = $@"<p>{getAdmin.UserName} invited you to collaborate in Medius as a <strong>Sub Admin<strong></p>
+                    //         <p>You can accept this invitation by clicking the below button.</p>
+                    //         <p><a href=""{resetToken}"">{resetToken}</a></p>";
+                    content = content.Replace("{{adminName}}", adminName);
                     content = content.Replace("{{resetToken}}", resetToken);
                     content = content.Replace("{{verificationToken}}", account.VerificationToken);
-                    content = content.Replace("{{message}}", message);
+                    content = content.Replace("{{userName}}", account.Email);
+                    content = content.Replace("{{password}}", account.PasswordHash);
+                    //content = content.Replace("{{message}}", message);
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
                 }
                 else
@@ -422,6 +433,36 @@ namespace Medius.DataAccess.Repository
         public AccountResponse Create(CreateRequest model)
         {
             throw new NotImplementedException();
+        }
+
+        public ApplicationUser UpdateOTP(string id, string OTP)
+        {
+            var account = getAccount(id);
+            account.OTP = OTP;
+            account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
+            account.Updated = DateTime.UtcNow;
+
+            _db.SaveChanges();
+
+            return account;
+        }
+        private string base64Decode(string sData) //Decode    
+        {
+            try
+            {
+                var encoder = new System.Text.UTF8Encoding();
+                System.Text.Decoder utf8Decode = encoder.GetDecoder();
+                byte[] todecodeByte = Convert.FromBase64String(sData);
+                int charCount = utf8Decode.GetCharCount(todecodeByte, 0, todecodeByte.Length);
+                char[] decodedChar = new char[charCount];
+                utf8Decode.GetChars(todecodeByte, 0, todecodeByte.Length, decodedChar, 0);
+                string result = new String(decodedChar);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error in base64Decode" + ex.Message);
+            }
         }
     }
 }
