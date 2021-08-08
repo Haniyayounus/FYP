@@ -99,7 +99,7 @@ namespace Medius.Controllers
 
                 if (user != null)
                 {
-                    user.ImagePath = folderpath + imageName + ".png";
+                    user.ImagePath = filePath;
                     _db.Entry(user).State = EntityState.Modified;
                     _db.SaveChanges();
                 }

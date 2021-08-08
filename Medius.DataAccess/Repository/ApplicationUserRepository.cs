@@ -118,6 +118,10 @@ namespace Medius.DataAccess.Repository
         public ApplicationUser Register(RegisterRequest model, string origin)
         {
 
+            bool existingEmail = _db.Users.Any(x => x.Email == model.Email);
+            if (existingEmail)
+                throw new Exception("Email already Registered");
+
             // map model to new account object
             model.UserName = model.FirstName + ' ' + model.LastName;
             var account = _mapper.Map<ApplicationUser>(model);
@@ -134,8 +138,14 @@ namespace Medius.DataAccess.Repository
             // save account
             _db.ApplicationUsers.Add(account);
             _db.SaveChanges();
+            
             // send email
-            sendVerificationEmail(account, origin);
+            if(account.Role == Role.User)
+                sendVerificationEmail(account, origin);
+
+            if (account.Role == Role.SubAdmin)
+                sendInviteEmail(account, origin);
+
             return account;
 
             
@@ -214,27 +224,6 @@ namespace Medius.DataAccess.Repository
             return _mapper.Map<AccountResponse>(account);
         }
 
-        public AccountResponse Create(CreateRequest model)
-        {
-            // validate
-            if (_db.ApplicationUsers.Any(x => x.Email == model.Email))
-                throw new AppException($"Email '{model.Email}' is already registered");
-
-            // map model to new account object
-            var account = _mapper.Map<ApplicationUser>(model);
-            account.Created = DateTime.UtcNow;
-            account.Verified = DateTime.UtcNow;
-
-            // hash password
-            account.PasswordHash = BC.HashPassword(model.Password);
-
-            // save account
-            _db.ApplicationUsers.Add(account);
-            _db.SaveChanges();
-
-            return _mapper.Map<AccountResponse>(account);
-        }
-
         public AccountResponse Update(string id, UpdateRequest model)
         {
             var account = getAccount(id);
@@ -271,7 +260,7 @@ namespace Medius.DataAccess.Repository
 
         private ApplicationUser getAccount(string id)
         {
-            var account = _db.ApplicationUsers.Find(id);
+            var account = _db.Users.SingleOrDefault(x => x.Id == id);
             if (account == null) throw new KeyNotFoundException("Account not found");
             return account;
         }
@@ -332,8 +321,7 @@ namespace Medius.DataAccess.Repository
             string subject;
             string path;
             string content;
-            if (account.Role == Role.User)
-            {
+             
                 subject = "Email Verification";
                 path = Path.Combine(_env.WebRootPath, "WelcomeEmail.html");
                 content = System.IO.File.ReadAllText(path);
@@ -356,20 +344,36 @@ namespace Medius.DataAccess.Repository
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
 
                 }
-            }
-            else
-            {
+            
+            _emailService.SendEmailAsync(account.Email, subject, content);
+
+        }
+
+        private void sendInviteEmail(ApplicationUser account, string origin)
+        {
+            string message;
+            string subject;
+            string path;
+            string content;
+
+            var getAdmin = _db.Users.SingleOrDefault(x => x.Role == Role.Admin);
+            account.PasswordHash = base64Decode(account.PasswordHash);
+            var adminName = getAdmin.UserName;
                 subject = "Invite Email";
                 path = Path.Combine(_env.WebRootPath, "InviteEmail.html");
                 content = System.IO.File.ReadAllText(path);
                 if (!string.IsNullOrEmpty(origin))
                 {
                     var resetToken = $"{origin}/api/account/VerifyEmail?token={account.VerificationToken}";
-                    message = $@"<p>Please click the below link to verify your email address:</p>
-                             <p><a href=""{resetToken}"">{resetToken}</a></p>";
+                    //message = $@"<p>{getAdmin.UserName} invited you to collaborate in Medius as a <strong>Sub Admin<strong></p>
+                    //         <p>You can accept this invitation by clicking the below button.</p>
+                    //         <p><a href=""{resetToken}"">{resetToken}</a></p>";
+                    content = content.Replace("{{adminName}}", adminName);
                     content = content.Replace("{{resetToken}}", resetToken);
                     content = content.Replace("{{verificationToken}}", account.VerificationToken);
-                    content = content.Replace("{{message}}", message);
+                    content = content.Replace("{{userName}}", account.Email);
+                    content = content.Replace("{{password}}", account.PasswordHash);
+                    //content = content.Replace("{{message}}", message);
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
                 }
                 else
@@ -382,7 +386,6 @@ namespace Medius.DataAccess.Repository
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
 
                 }
-            }
             _emailService.SendEmailAsync(account.Email, subject, content);
 
         }
@@ -411,7 +414,7 @@ namespace Medius.DataAccess.Repository
             string path = Path.Combine(_env.WebRootPath, "PasswordResetEmail.html");
             string content = System.IO.File.ReadAllText(path);
            
-                message = $@"<p>A request has been received to change the password for your Medius account, the link will be valid for 1 day:</p>";
+                message = $@"<p>A request has been received to change the password for your Medius account, the code will be valid for 1 day:</p>";
                 content = content.Replace("{{uerName}}", account.UserName);
                 content = content.Replace("{{resetToken}}", account.ResetToken);
                 content = content.Replace("{{message}}", message);
@@ -425,6 +428,41 @@ namespace Medius.DataAccess.Repository
         {
             var account = getAccount(id);
             return account;
+        }
+
+        public AccountResponse Create(CreateRequest model)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ApplicationUser UpdateOTP(string id, string OTP)
+        {
+            var account = getAccount(id);
+            account.OTP = OTP;
+            account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
+            account.Updated = DateTime.UtcNow;
+
+            _db.SaveChanges();
+
+            return account;
+        }
+        private string base64Decode(string sData) //Decode    
+        {
+            try
+            {
+                var encoder = new System.Text.UTF8Encoding();
+                System.Text.Decoder utf8Decode = encoder.GetDecoder();
+                byte[] todecodeByte = Convert.FromBase64String(sData);
+                int charCount = utf8Decode.GetCharCount(todecodeByte, 0, todecodeByte.Length);
+                char[] decodedChar = new char[charCount];
+                utf8Decode.GetChars(todecodeByte, 0, todecodeByte.Length, decodedChar, 0);
+                string result = new String(decodedChar);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error in base64Decode" + ex.Message);
+            }
         }
     }
 }
