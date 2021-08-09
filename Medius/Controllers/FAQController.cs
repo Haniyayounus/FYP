@@ -1,5 +1,6 @@
 ﻿using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
+using Medius.Model.ViewModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -37,14 +38,16 @@ namespace Medius.Controllers
 
         [HttpPost]
         [Route("Add")]
-        public async Task<IActionResult> Add(string question, string answer)
+        public async Task<IActionResult> Add(FAQViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
                 FAQ faq = new FAQ
                 {
-                    Question = question,
-                    Answer = answer
+                    Question = viewModel.Question,
+                    Answer = viewModel.Answer,
+                    CreatedBy = viewModel.CreatedBy,
+                    ModifiedBy = viewModel.ModifiedBy
                 };
                 var data = await _unitOfWork.FAQ.AddAsync(faq);
                 _unitOfWork.Save();
@@ -58,15 +61,17 @@ namespace Medius.Controllers
 
         [HttpPut]
         [Route("Update")]
-        public async Task<IActionResult> Update(int id, string question, string answer)
+        public async Task<IActionResult> Update(FAQViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
                 FAQ faq = new FAQ
                 {
-                    Id = id,
-                    Question = question,
-                    Answer = answer
+                    Id = viewModel.Id,
+                    Question = viewModel.Question,
+                    Answer = viewModel.Answer,
+                    CreatedBy = viewModel.CreatedBy,
+                    ModifiedBy = viewModel.ModifiedBy
                 };
                 var data = await _unitOfWork.FAQ.Update(faq);
                 _unitOfWork.Save();
@@ -92,6 +97,14 @@ namespace Medius.Controllers
             _unitOfWork.Save();
 
             return StatusCode(StatusCodes.Status200OK);
+        }
+
+        [HttpPut]
+        [Route("Archive")]
+        public async Task<IActionResult> Archive(ArchiveFAQVM viewModel)
+        {
+            var faq = await _unitOfWork.FAQ.Archive(viewModel);
+            return StatusCode(StatusCodes.Status200OK, faq);
         }
     }
 }
