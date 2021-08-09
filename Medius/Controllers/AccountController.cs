@@ -14,6 +14,9 @@ using Twilio.Rest.Api.V2010.Account;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Medius.Controllers
 {
