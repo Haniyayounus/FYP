@@ -170,7 +170,7 @@ namespace Medius.DataAccess.Repository
 
             _db.ApplicationUsers.Update(account);
             _db.SaveChanges();
-            return account;
+                return account;
         }
 
         public string ForgotPassword(ForgotPasswordRequest model, string origin)
