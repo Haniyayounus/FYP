@@ -122,6 +122,14 @@ namespace Medius.DataAccess.Repository
             if (existingEmail)
                 throw new Exception("Email already Registered");
 
+            bool existingCNIC = _db.Users.Any(x => x.Cnic == model.CNIC);
+            if (existingCNIC)
+                throw new Exception("CNIC already Registered");
+
+            bool existingPhone = _db.Users.Any(x => x.PhoneNumber == model.PhoneNumber);
+            if (existingPhone)
+                throw new Exception("Phone Number already Registered");
+
             // map model to new account object
             model.UserName = model.FirstName + ' ' + model.LastName;
             var account = _mapper.Map<ApplicationUser>(model);
@@ -144,7 +152,7 @@ namespace Medius.DataAccess.Repository
                 sendVerificationEmail(account, origin);
 
             if (account.Role == Role.SubAdmin)
-                sendInviteEmail(account, origin);
+                sendInviteEmail(account, origin, model.Password);
 
             return account;
 
@@ -153,7 +161,7 @@ namespace Medius.DataAccess.Repository
 
         public ApplicationUser VerifyEmail(string token)
         {
-            var account = _db.ApplicationUsers.SingleOrDefault(x => x.VerificationToken == token);
+            var account = _db.Users.SingleOrDefault(x => x.VerificationToken == token);
 
             if (account == null) throw new AppException("Verification failed");
 
@@ -350,7 +358,7 @@ namespace Medius.DataAccess.Repository
 
         }
 
-        private void sendInviteEmail(ApplicationUser account, string origin)
+        private void sendInviteEmail(ApplicationUser account, string origin, string password)
         {
             string message;
             string subject;
@@ -358,8 +366,8 @@ namespace Medius.DataAccess.Repository
             string content;
 
             var getAdmin = _db.Users.SingleOrDefault(x => x.Role == Role.Admin);
-            account.PasswordHash = base64Decode(account.PasswordHash);
             var adminName = getAdmin.UserName;
+            
                 subject = "Invite Email";
                 path = Path.Combine(_env.WebRootPath, "InviteEmail.html");
                 content = System.IO.File.ReadAllText(path);
@@ -373,7 +381,7 @@ namespace Medius.DataAccess.Repository
                     content = content.Replace("{{resetToken}}", resetToken);
                     content = content.Replace("{{verificationToken}}", account.VerificationToken);
                     content = content.Replace("{{userName}}", account.Email);
-                    content = content.Replace("{{password}}", account.PasswordHash);
+                    content = content.Replace("{{password}}", password);
                     //content = content.Replace("{{message}}", message);
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
                 }
