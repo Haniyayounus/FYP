@@ -1,6 +1,4 @@
-﻿<!--<link href="lib/twitter-bootstrap/css/bootstrap.css" rel="stylesheet" />-->
-<link href="css/site.css" rel="stylesheet" />
-<div>
+﻿<div>
     <div class="_3U2q6dcdZCrTrR_42Nxby JWNdg1hee9_Rz6bIGvG1c allowTextSelection">
         <div>
             <style type="text/css">
@@ -433,60 +431,6 @@
                         line-height: 150% !important
                     }
                 }
-
-
-
-
-                /* The Modal (background) */
-                .modal {
-                    display: none; /* Hidden by default */
-                    position: fixed; /* Stay in place */
-                    z-index: 1; /* Sit on top */
-                    /*padding-top: 100px;*/ /* Location of the box */
-                    left: 0;
-                    top: 0;
-                    width: 100%; /* Full width */
-                    height: 100%; /* Full height */
-                    overflow: auto; /* Enable scroll if needed */
-                    background-color: rgb(0,0,0); /* Fallback color */
-                    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-                }
-
-                /* Modal Content */
-                .modal-content {
-                    background-color: #fefefe;
-                    margin: auto;
-                    padding: 20px;
-                    border: 1px solid #888;
-                    width: 80%;
-                }
-
-                /* The Close Button */
-                .close {
-                    color: #aaaaaa;
-                    float: right;
-                    font-size: 28px;
-                    font-weight: bold;
-                }
-
-                    .close:hover,
-                    .close:focus {
-                        color: #000;
-                        text-decoration: none;
-                        cursor: pointer;
-                    }
-                .button {
-                    background-color: #4CAF50;
-                    border: none;
-                    color: white;
-                    padding: 15px 32px;
-                    text-align: center;
-                    text-decoration: none;
-                    display: inline-block;
-                    font-size: 16px;
-                    margin: 4px 2px;
-                    cursor: pointer;
-                }
                 -->
             </style>
             <div class="rps_4ed9">
@@ -572,9 +516,14 @@
                                                                                                 <p>Password: {{password}}</p>
                                                                                             </span><br>
                                                                                             <!-- Button trigger modal -->
-                                                                                            <a type="button"  id="inviteButton" href="{{resetToken}}" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; margin-left: 40%">
+                                                                                                   <centre>
+                                                                                                       <a type="button" href='{{resetToken}}' style='background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;'>
+                                                                                                           Verify Email
+                                                                                                       </a>
+                                                                                                   </centre>
+                                                                                            <!--<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong" onclick="window.location='{{resetToken}}'" style="margin-left: 40%">
                                                                                                 Accept Invitation
-                                                                                            </a><br /><br />
+                                                                                            </button>--><br /><br />
                                                                                             <center><strong style="font-size:24px">{{resetToken}}</strong></center>
                                                                                             <!--<p>{{message}}</p>-->
 

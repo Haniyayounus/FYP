@@ -337,19 +337,19 @@ namespace Medius.DataAccess.Repository
                 if (!string.IsNullOrEmpty(origin))
                 {
                     var resetToken = $"{origin}/api/account/VerifyEmail?token={account.VerificationToken}";
-                    message = $@"<p>Please click the below link to verify your email address:</p>
-                             <p><a href=""{resetToken}"">{resetToken}</a></p>";
+                    //message = $@"<p>Please click the below link to verify your email address:</p>
+                    //         <p><a href=""{resetToken}"">{resetToken}</a></p>";
                     content = content.Replace("{{resetToken}}", resetToken);
                     content = content.Replace("{{verificationToken}}", account.VerificationToken);
-                    content = content.Replace("{{message}}", message);
+                    //content = content.Replace("{{message}}", message);
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
                 }
                 else
                 {
-                    message = $@"<p>Please use the below token to verify your email address with the <code>/api/accounts/VerifyEmail</code> api route:</p>
-                             <p><code>{account.VerificationToken}</code></p>";
+                    //message = $@"<p>Please use the below token to verify your email address with the <code>/api/accounts/VerifyEmail</code> api route:</p>
+                    //         <p><code>{account.VerificationToken}</code></p>";
                     content = content.Replace("{{resetToken}}", account.VerificationToken);
-                    content = content.Replace("{{message}}", message);
+                    //content = content.Replace("{{message}}", message);
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
 
                 }
