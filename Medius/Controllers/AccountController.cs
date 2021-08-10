@@ -84,7 +84,7 @@ namespace Medius.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status200OK, ex.Message);
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
             }
             }
 

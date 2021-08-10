@@ -334,8 +334,7 @@ namespace Medius.DataAccess.Repository
                 subject = "Email Verification";
                 path = Path.Combine(_env.WebRootPath, "WelcomeEmail.html");
                 content = System.IO.File.ReadAllText(path);
-                if (!string.IsNullOrEmpty(origin))
-                {
+                
                     var resetToken = "http://18.116.70.71/api/account/VerifyEmail?token=" + account.VerificationToken;
                     //message = $@"<p>Please click the below link to verify your email address:</p>
                     //         <p><a href=""{resetToken}"">{resetToken}</a></p>";
@@ -343,16 +342,7 @@ namespace Medius.DataAccess.Repository
                     content = content.Replace("{{verificationToken}}", account.VerificationToken);
                     //content = content.Replace("{{message}}", message);
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
-                }
-                else
-                {
-                    //message = $@"<p>Please use the below token to verify your email address with the <code>/api/accounts/VerifyEmail</code> api route:</p>
-                    //         <p><code>{account.VerificationToken}</code></p>";
-                    content = content.Replace("{{resetToken}}", account.VerificationToken);
-                    //content = content.Replace("{{message}}", message);
-                    content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
-
-                }
+                
             
             _emailService.SendEmailAsync(account.Email, subject, content);
 
