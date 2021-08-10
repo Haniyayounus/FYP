@@ -121,23 +121,10 @@ namespace Medius.Controllers
 
         [HttpPost]
         [Route("Add")]
-        public async Task<IActionResult> Add(ModeofRegistration mode, string title, string desc, int cityId, int claimId,int filterId, string userId, string modifyBy, IFormFile doc, IFormFile pic,string app, string cont, CaseType type)
+        public async Task<IActionResult> Add(CaseViewModel viewModel)
         {
             try
             {
-                CaseViewModel viewModel = new CaseViewModel{ 
-                    Title = title,
-                    Description = desc,
-                    CityId = cityId,
-                    ClaimId =claimId,
-                    IpFilterId = filterId,
-                    UserId = userId,
-                    ModifiedBy = modifyBy,
-                    ModeofRegistration = mode,
-                    Type = type,
-                    Image = pic,
-                    Document = doc
-                };
                 var allObj = await _unitOfWork.Add(viewModel);
                 return StatusCode(StatusCodes.Status200OK, allObj);
             }
