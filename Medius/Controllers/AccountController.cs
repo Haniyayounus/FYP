@@ -9,12 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using System.Net.Http;
@@ -86,7 +84,7 @@ namespace Medius.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status200OK, ex.Message);
+                return StatusCode(StatusCodes.Status404NotFound, ex.Message);
             }
             }
 
