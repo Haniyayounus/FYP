@@ -122,6 +122,14 @@ namespace Medius.DataAccess.Repository
             if (existingEmail)
                 throw new Exception("Email already Registered");
 
+            bool existingCNIC = _db.Users.Any(x => x.Cnic == model.CNIC);
+            if (existingCNIC)
+                throw new Exception("CNIC already Registered");
+
+            bool existingPhone = _db.Users.Any(x => x.PhoneNumber == model.PhoneNumber);
+            if (existingPhone)
+                throw new Exception("Phone Number already Registered");
+
             // map model to new account object
             model.UserName = model.FirstName + ' ' + model.LastName;
             var account = _mapper.Map<ApplicationUser>(model);
@@ -144,16 +152,16 @@ namespace Medius.DataAccess.Repository
                 sendVerificationEmail(account, origin);
 
             if (account.Role == Role.SubAdmin)
-                sendInviteEmail(account, origin);
+                sendInviteEmail(account, origin, model.Password);
 
             return account;
 
             
         }
 
-        public void VerifyEmail(string token)
+        public ApplicationUser VerifyEmail(string token)
         {
-            var account = _db.ApplicationUsers.SingleOrDefault(x => x.VerificationToken == token);
+            var account = _db.Users.SingleOrDefault(x => x.VerificationToken == token);
 
             if (account == null) throw new AppException("Verification failed");
 
@@ -162,6 +170,7 @@ namespace Medius.DataAccess.Repository
 
             _db.ApplicationUsers.Update(account);
             _db.SaveChanges();
+                return account;
         }
 
         public string ForgotPassword(ForgotPasswordRequest model, string origin)
@@ -317,7 +326,7 @@ namespace Medius.DataAccess.Repository
 
         private void sendVerificationEmail(ApplicationUser account, string origin)
         {
-            string message;
+            //string message;
             string subject;
             string path;
             string content;
@@ -325,31 +334,21 @@ namespace Medius.DataAccess.Repository
                 subject = "Email Verification";
                 path = Path.Combine(_env.WebRootPath, "WelcomeEmail.html");
                 content = System.IO.File.ReadAllText(path);
-                if (!string.IsNullOrEmpty(origin))
-                {
-                    var resetToken = $"{origin}/api/account/VerifyEmail?token={account.VerificationToken}";
-                    message = $@"<p>Please click the below link to verify your email address:</p>
-                             <p><a href=""{resetToken}"">{resetToken}</a></p>";
+                
+                    var resetToken = "http://18.116.70.71/api/account/VerifyEmail?token=" + account.VerificationToken;
+                    //message = $@"<p>Please click the below link to verify your email address:</p>
+                    //         <p><a href=""{resetToken}"">{resetToken}</a></p>";
                     content = content.Replace("{{resetToken}}", resetToken);
                     content = content.Replace("{{verificationToken}}", account.VerificationToken);
-                    content = content.Replace("{{message}}", message);
+                    //content = content.Replace("{{message}}", message);
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
-                }
-                else
-                {
-                    message = $@"<p>Please use the below token to verify your email address with the <code>/api/accounts/VerifyEmail</code> api route:</p>
-                             <p><code>{account.VerificationToken}</code></p>";
-                    content = content.Replace("{{resetToken}}", account.VerificationToken);
-                    content = content.Replace("{{message}}", message);
-                    content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
-
-                }
+                
             
             _emailService.SendEmailAsync(account.Email, subject, content);
 
         }
 
-        private void sendInviteEmail(ApplicationUser account, string origin)
+        private void sendInviteEmail(ApplicationUser account, string origin, string password)
         {
             string message;
             string subject;
@@ -357,14 +356,14 @@ namespace Medius.DataAccess.Repository
             string content;
 
             var getAdmin = _db.Users.SingleOrDefault(x => x.Role == Role.Admin);
-            account.PasswordHash = base64Decode(account.PasswordHash);
             var adminName = getAdmin.UserName;
+            
                 subject = "Invite Email";
                 path = Path.Combine(_env.WebRootPath, "InviteEmail.html");
                 content = System.IO.File.ReadAllText(path);
                 if (!string.IsNullOrEmpty(origin))
                 {
-                    var resetToken = $"{origin}/api/account/VerifyEmail?token={account.VerificationToken}";
+                    var resetToken = "http://18.116.70.71/api/account/VerifyEmail?token="+account.VerificationToken;
                     //message = $@"<p>{getAdmin.UserName} invited you to collaborate in Medius as a <strong>Sub Admin<strong></p>
                     //         <p>You can accept this invitation by clicking the below button.</p>
                     //         <p><a href=""{resetToken}"">{resetToken}</a></p>";
@@ -372,7 +371,7 @@ namespace Medius.DataAccess.Repository
                     content = content.Replace("{{resetToken}}", resetToken);
                     content = content.Replace("{{verificationToken}}", account.VerificationToken);
                     content = content.Replace("{{userName}}", account.Email);
-                    content = content.Replace("{{password}}", account.PasswordHash);
+                    content = content.Replace("{{password}}", password);
                     //content = content.Replace("{{message}}", message);
                     content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
                 }

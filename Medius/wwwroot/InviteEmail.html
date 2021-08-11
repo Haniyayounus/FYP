@@ -1,6 +1,4 @@
-﻿<link href="lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
-
-<div>
+﻿<div>
     <div class="_3U2q6dcdZCrTrR_42Nxby JWNdg1hee9_Rz6bIGvG1c allowTextSelection">
         <div>
             <style type="text/css">
@@ -518,10 +516,15 @@
                                                                                                 <p>Password: {{password}}</p>
                                                                                             </span><br>
                                                                                             <!-- Button trigger modal -->
-                                                                                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong" onclick="window.location='{{resetToken}}'" style="margin-left: 40%">
+                                                                                                   <centre>
+                                                                                                       <a type="button" href='{{resetToken}}' style='background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;'>
+                                                                                                           Accept Inviation
+                                                                                                       </a>
+                                                                                                   </centre>
+                                                                                            <!--<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalLong" onclick="window.location='{{resetToken}}'" style="margin-left: 40%">
                                                                                                 Accept Invitation
-                                                                                            </button><br /><br />
-                                                                                            <center><strong style="font-size:24px">{{resetToken}}</strong></center>
+                                                                                            </button>--><br /><br />
+                                                                                            <!--<center><strong style="font-size:24px">{{resetToken}}</strong></center>-->
                                                                                             <!--<p>{{message}}</p>-->
 
                                                                                             <br />
@@ -769,23 +772,3 @@
 </div>
 
 
-
-<!-- Modal -->
-<div class="modal fade" id="exampleModalLong" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content" style="align-items:center; height:50% !important; margin-top:20%">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="margin-left: 95%;">
-                <span aria-hidden="true">&times;</span>
-            </button>
-
-            <i class="fas fa-check-circle fa-10x" style="color:green"></i><br />
-            <p>Congratulations!</p>
-            <p>You've successfully accepted the invitation.</p>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-success" onclick="window.location ='https://meet.google.com/szj-foaj-bek'">
-                    Login Now
-                </button><br /><br />
-            </div>
-        </div>
-    </div>
-</div>
