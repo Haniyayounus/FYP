@@ -7,7 +7,6 @@ namespace Medius.Model.ViewModels
 {
     public class CaseViewModel
     {
-        public virtual string Id { get; set; }
 
         [Required]
         public string Title { get; set; }
@@ -21,9 +20,6 @@ namespace Medius.Model.ViewModels
         public string Application { get; set; }
         [Required]
         public Status Status { get; set; }
-        [Required]
-        public string ImagePath { get; set; }
-        public string DocumentPath { get; set; }
         [Required]
         public ModeofRegistration ModeofRegistration { get; set; }
 
