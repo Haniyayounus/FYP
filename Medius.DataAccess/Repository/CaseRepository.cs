@@ -136,6 +136,16 @@ namespace Medius.DataAccess.Repository
         public async Task<Case> ChangeIPStatus(ChangeStatusViewModel vm)
         {
             var casebyId = await _db.Cases.FirstOrDefaultAsync(x => x.UserId == vm.userId && x.Id == vm.caseId && x.IsActive);
+            var user = await _db.Users.FirstOrDefaultAsync(x => x.Id == vm.userId);
+            if (vm.Status == Status.Publish)
+            {
+                var receiptUrl = UploadReceipt(user.FirstName, casebyId.Type, vm.Receipt);
+                casebyId.ReceiptPath = receiptUrl;
+            }
+            
+            if (vm.Status == Status.Reject)
+                    casebyId.Comment = vm.Comment;
+            
             casebyId.Status = vm.Status;
             casebyId.ModifiedBy = vm.loggedInUserId;
             casebyId.LastModify = DateTime.Now;
@@ -368,6 +378,43 @@ namespace Medius.DataAccess.Repository
             if (a == true)
             {
                 var baseUrl = "https://dinematebucket.s3.us-east-2.amazonaws.com/CaseDocuments/" + name;
+                return baseUrl;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private string UploadReceipt(string username, CaseType ipType, IFormFile image)
+        {
+            AmazonUploader myUploader = new AmazonUploader();
+            bool a;
+            string myBucketName = "dinematebucket"; //your s3 bucket name goes here  
+            var date = DateTime.Now;
+            //get random number
+            var randomNumber = new TimeSpan(date.Year, date.Month, date.Day, new Random().Next(10000)).TotalSeconds;
+
+            var imageName = randomNumber + "-" + ipType + "-" + username + "- Image";
+
+            if (FileUtility.IsImageFile(image.FileName) == false)
+            {
+                throw new Exception("Invalid File Type");
+            }
+            var st = new MemoryStream();
+            image.CopyTo(st);
+            var fileBytes = st.ToArray();
+            string s = Convert.ToBase64String(fileBytes);
+            // act on the Base64 data
+            //Stream st = file.PostefFile.InputStream;
+            string name = Path.GetFileName(image.FileName);
+            string s3DirectoryName = "CaseReceipt";
+            name = imageName + ".png";
+            string s3FileName = @name;
+            a = myUploader.sendMyFileToS3(st, myBucketName, s3DirectoryName, s3FileName);
+            if (a == true)
+            {
+                var baseUrl = "https://dinematebucket.s3.us-east-2.amazonaws.com/CaseReceipt/" + name;
                 return baseUrl;
             }
             else

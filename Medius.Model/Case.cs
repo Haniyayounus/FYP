@@ -19,6 +19,8 @@ namespace Medius.Model
             public Status Status { get; set; }
             public string ImagePath { get; set; }
             public string DocumentPath { get; set; }
+            public string ReceiptPath { get; set; }
+            public string Comment { get; set; }
             public ModeofRegistration ModeofRegistration { get; set; }
 
             [NotMapped]
