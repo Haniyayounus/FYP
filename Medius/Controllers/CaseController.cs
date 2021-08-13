@@ -110,6 +110,19 @@ namespace Medius.Controllers
                     return StatusCode(StatusCodes.Status404NotFound, "User id can't be null");
                 if (viewModel.caseId == 0)
                     return StatusCode(StatusCodes.Status404NotFound, "Case id can't be null");
+
+                if(viewModel.Status == Status.Publish)
+                {
+                    if(viewModel.Receipt == null)
+                        return StatusCode(StatusCodes.Status404NotFound, "Receipt can't be null");
+                }
+
+                if (viewModel.Status == Status.Reject)
+                {
+                    if (viewModel.Comment == null || string.IsNullOrEmpty(viewModel.Comment))
+                        return StatusCode(StatusCodes.Status404NotFound, "Receipt can't be null");
+                }
+
                 var allObj = await _unitOfWork.ChangeIPStatus(viewModel);
                 return StatusCode(StatusCodes.Status200OK, allObj);
             }

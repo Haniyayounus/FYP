@@ -258,15 +258,15 @@ namespace Medius.Controllers
                 return Ok(new { message = "Account deleted successfully" });
             }
             [Authorize]
-            [HttpPut("Archive/{Id}")]
-            public async Task<IActionResult> Archive(string userId)
+            [HttpPut("Archive")]
+            public async Task<IActionResult> Archive(string Id)
             {
             //// users can delete their own account and admins can delete any account
-            if (userId != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
+            if (Id != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
                 return Unauthorized(new { message = "Unauthorized" });
 
 
-            await _unitOfWork.ArchiveUser(userId);
+            await _unitOfWork.ArchiveUser(Id);
                 return StatusCode(StatusCodes.Status200OK, "Account archived successfully" );
             }
 
@@ -295,8 +295,8 @@ namespace Medius.Controllers
                     //_db.SaveChanges();
                     // SMS Service
                     var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
-                    var authToken = ("");
-                    var from = ("+14848044359");
+                var authToken = ("");
+                var from = ("+14848044359");
                     var to = account.PhoneNumber;
                     TwilioClient.Init(accountSid, authToken);
 
