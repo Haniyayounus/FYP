@@ -194,7 +194,7 @@ namespace Medius.DataAccess.Repository
 
         public void ValidateResetToken(string resetToken)
         {
-            var account = _db.ApplicationUsers.SingleOrDefault(x =>
+            var account = _db.Users.SingleOrDefault(x =>
                 x.ResetToken == resetToken &&
                 x.ResetTokenExpires > DateTime.UtcNow);
 

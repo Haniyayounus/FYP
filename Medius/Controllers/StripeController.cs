@@ -5,9 +5,11 @@ using Medius.Model.ViewModels;
 using Medius.Models.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Stripe;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Medius.Controllers
@@ -19,15 +21,18 @@ namespace Medius.Controllers
         private readonly ICaseRepository _caserepo;
         private readonly IUnitOfWork _unitofwork;
         private readonly IApplicationUserRepository _user;
+        private readonly ApplicationDbContext _db;
 
-        public StripeController(ICaseRepository caserepo, IUnitOfWork unitofwork, IApplicationUserRepository user)
+        public StripeController(ICaseRepository caserepo, IUnitOfWork unitofwork, IApplicationUserRepository user,
+            ApplicationDbContext db)
         {
             _caserepo = caserepo;
             _unitofwork = unitofwork;
             _user = user;
+            _db = db;
         }
 
-        [HttpPost]
+        [HttpPost("Charge")]
         public async Task<IActionResult> Charge(StripViewModel viewModel)
         {
             var customerService = new CustomerService();
@@ -96,14 +101,13 @@ namespace Medius.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("GetAllPaymentDetails")]
         public async Task<IActionResult> GetAllPaymentDetails()
         {
             try
             {
 
-                var allObj = await _unitofwork.Stripe.GetAllAsync();
-                
+                var allObj = await _db.StripePayments.Include(x => x.Case).ToListAsync();
                 return StatusCode(StatusCodes.Status200OK, allObj);
             }
             catch(Exception ex)
@@ -112,5 +116,11 @@ namespace Medius.Controllers
             }
         }
 
+        [HttpGet("GetPaymentByCaseId")]
+        public async Task<IActionResult> GetPaymentByCaseId(int caseId)
+        {
+            var objFromDb = _db.StripePayments.FirstOrDefault(s => s.CaseId == caseId) ?? throw new Exception($"No Payment found against id:'{caseId}'");
+            return StatusCode(StatusCodes.Status200OK, objFromDb);
+        }
     }
 }

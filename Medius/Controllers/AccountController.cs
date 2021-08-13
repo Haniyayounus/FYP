@@ -131,7 +131,7 @@ namespace Medius.Controllers
             if (model.mode == "SMS")
             {
                 var code = StringUtility.GenerateVerificationCode(6);
-                var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Email == model.Email);
+                var account = await _db.Users.SingleOrDefaultAsync(x => x.Email == model.Email);
 
                 // always return ok response to prevent email enumeration
                 if (account == null) return null;
@@ -215,7 +215,7 @@ namespace Medius.Controllers
             }
             }
 
-            [Authorize(Role.Admin)]
+            [Authorize]
             [HttpGet("GetAll")]
             public ActionResult<IEnumerable<AccountResponse>> GetAll()
             {

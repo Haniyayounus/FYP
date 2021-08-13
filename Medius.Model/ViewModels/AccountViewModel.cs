@@ -143,9 +143,11 @@ namespace Medius.Model.ViewModels
         public string PhoneNumber { get; set; }
         public string CNIC { get; set; }
         public string Role { get; set; }
+        public string ImagePath { get; set; }
         public DateTime Created { get; set; }
         public DateTime? Updated { get; set; }
         public bool IsVerified { get; set; }
+        public bool IsActive { get; set; }
     }
     public class CreateRequest
     {
