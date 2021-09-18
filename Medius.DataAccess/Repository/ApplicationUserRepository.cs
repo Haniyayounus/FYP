@@ -25,10 +25,10 @@ namespace Medius.DataAccess.Repository
     {
         private readonly ApplicationDbContext _db;
         private readonly IMapper _mapper;
-            private readonly IHostingEnvironment _env;
+            private readonly IWebHostEnvironment _env;
         private readonly EmailSender _emailService;
 
-        public ApplicationUserRepository(ApplicationDbContext db, IMapper mapper, EmailSender emailService, IHostingEnvironment env) : base(db)
+        public ApplicationUserRepository(ApplicationDbContext db, IMapper mapper, EmailSender emailService, IWebHostEnvironment env) : base(db)
         {
             _db = db;
             _mapper = mapper;
@@ -194,7 +194,7 @@ namespace Medius.DataAccess.Repository
 
         public void ValidateResetToken(string resetToken)
         {
-            var account = _db.ApplicationUsers.SingleOrDefault(x =>
+            var account = _db.Users.SingleOrDefault(x =>
                 x.ResetToken == resetToken &&
                 x.ResetTokenExpires > DateTime.UtcNow);
 

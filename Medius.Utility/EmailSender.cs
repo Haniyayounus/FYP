@@ -65,8 +65,35 @@ namespace Medius.Utility
                 smtp.Send(message);
             return "message sent";
         }
-        
-           
+
+        public string SendEmailToAllAsync(List<string> emails, string subject, string htmlMessage)
+        {
+            var fromEmail = new MailAddress("mediusdigitalaccess@gmail.com");
+            foreach (var email in emails)
+            {
+                var toEmail = new MailAddress(email);
+
+                var fromEmailPassword = "mediusapp544";
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromEmail.Address, fromEmailPassword)
+                };
+                using (var message = new MailMessage(fromEmail, toEmail)
+                {
+                    Subject = subject,
+                    Body = htmlMessage,
+                    IsBodyHtml = true
+                })
+                    smtp.Send(message);
+            }
+            return "message sent";
+        }
+
         //public Task SendAsync(IdentityMessage message)
         //{
         //    const string sentFrom = "younushaniya@google.com";
