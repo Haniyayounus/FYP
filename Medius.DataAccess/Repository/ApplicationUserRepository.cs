@@ -25,10 +25,10 @@ namespace Medius.DataAccess.Repository
     {
         private readonly ApplicationDbContext _db;
         private readonly IMapper _mapper;
-            private readonly IHostingEnvironment _env;
+            private readonly IWebHostEnvironment _env;
         private readonly EmailSender _emailService;
 
-        public ApplicationUserRepository(ApplicationDbContext db, IMapper mapper, EmailSender emailService, IHostingEnvironment env) : base(db)
+        public ApplicationUserRepository(ApplicationDbContext db, IMapper mapper, EmailSender emailService, IWebHostEnvironment env) : base(db)
         {
             _db = db;
             _mapper = mapper;

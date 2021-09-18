@@ -24,5 +24,6 @@ namespace Medius.DataAccess.Data
         public DbSet<StripePayment> StripePayments { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<FAQ> FAQs { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
     }
 }

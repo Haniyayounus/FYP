@@ -70,4 +70,12 @@ namespace Medius.Model.ViewModel
         [Required]
         public override int Id { get; set; }
     }
+    public class NotificationViewModel
+    {
+
+        [Required]
+        public string Title { get; set; }
+        public string Subject { get; set; }
+        public string Description{ get; set; }
+    }
 }

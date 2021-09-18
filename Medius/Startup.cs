@@ -63,6 +63,7 @@ namespace Medius
             // configure DI for application services
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<ICaseRepository, CaseRepository>();
             services.AddScoped<EmailSender>();
 
@@ -75,8 +76,6 @@ namespace Medius
             });
             services.Configure<EmailOptions>(Configuration);
             services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
-            services.Configure<BrainTreeSettings>(Configuration.GetSection("BrainTree"));
-            services.AddSingleton<IBrainTreeGate, BrainTreeGate>();
            
             services.AddRazorPages();
             services.ConfigureApplicationCookie(options =>
