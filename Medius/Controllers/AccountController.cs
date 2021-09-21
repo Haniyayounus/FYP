@@ -338,6 +338,7 @@ namespace Medius.Controllers
                     var authToken = ("");
                     var from = ("+14848044359");
                     var to = account.PhoneNumber;
+
                     TwilioClient.Init(accountSid, authToken);
 
                     var message = await MessageResource.CreateAsync
