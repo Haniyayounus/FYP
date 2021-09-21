@@ -78,6 +78,10 @@ namespace Medius.Utility
         {
             return ImageExtension.Split(',').Contains(Path.GetExtension(fileName).ToLower());
         }
+        public static bool IsDocumentFile(string fileName)
+        {
+            return DocumentExtension.Split(',').Contains(Path.GetExtension(fileName).ToLower());
+        }
         public static bool IsZipFile(string fileName)
         {
             return ZipExtension.Split(',').Contains(Path.GetExtension(fileName));

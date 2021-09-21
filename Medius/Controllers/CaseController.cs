@@ -4,6 +4,7 @@ using Medius.Models.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Medius.Controllers
@@ -110,6 +111,19 @@ namespace Medius.Controllers
                     return StatusCode(StatusCodes.Status404NotFound, "User id can't be null");
                 if (viewModel.caseId == 0)
                     return StatusCode(StatusCodes.Status404NotFound, "Case id can't be null");
+
+                if(viewModel.Status == Status.Publish)
+                {
+                    if(viewModel.Receipt == null)
+                        return StatusCode(StatusCodes.Status404NotFound, "Receipt can't be null");
+                }
+
+                if (viewModel.Status == Status.Reject)
+                {
+                    if (viewModel.Comment == null || string.IsNullOrEmpty(viewModel.Comment))
+                        return StatusCode(StatusCodes.Status404NotFound, "Receipt can't be null");
+                }
+
                 var allObj = await _unitOfWork.ChangeIPStatus(viewModel);
                 return StatusCode(StatusCodes.Status200OK, allObj);
             }
@@ -121,23 +135,10 @@ namespace Medius.Controllers
 
         [HttpPost]
         [Route("Add")]
-        public async Task<IActionResult> Add(ModeofRegistration mode, string title, string desc, int cityId, int claimId,int filterId, string userId, string modifyBy, IFormFile doc, IFormFile pic,string app, string cont, CaseType type)
+        public async Task<IActionResult> Add([FromForm]CaseViewModel viewModel)
         {
             try
             {
-                CaseViewModel viewModel = new CaseViewModel{ 
-                    Title = title,
-                    Description = desc,
-                    CityId = cityId,
-                    ClaimId =claimId,
-                    IpFilterId = filterId,
-                    UserId = userId,
-                    ModifiedBy = modifyBy,
-                    ModeofRegistration = mode,
-                    Type = type,
-                    Image = pic,
-                    Document = doc
-                };
                 var allObj = await _unitOfWork.Add(viewModel);
                 return StatusCode(StatusCodes.Status200OK, allObj);
             }

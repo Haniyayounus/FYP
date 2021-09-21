@@ -7,31 +7,16 @@ namespace Medius.Model.ViewModels
 {
     public class CaseViewModel
     {
-        public virtual string Id { get; set; }
 
-        [Required]
         public string Title { get; set; }
-        [Required]
         public string Description { get; set; }
-        [Required]
         public CaseType Type { get; set; }
-        [Required]
         public string Contact { get; set; }
-        [Required]
         public string Application { get; set; }
-        [Required]
         public Status Status { get; set; }
-        [Required]
-        public string ImagePath { get; set; }
-        public string DocumentPath { get; set; }
-        [Required]
         public ModeofRegistration ModeofRegistration { get; set; }
-
-        [NotMapped]
         public IFormFile Document { get; set; }
-        [NotMapped]
         public IFormFile Image { get; set; }
-
         public int CityId { get; set; }
 
         [ForeignKey("ClaimId")]
@@ -49,6 +34,8 @@ namespace Medius.Model.ViewModels
         public string loggedInUserId { get; set; }
         public int caseId { get; set; }
         public Status Status { get; set; }
+        public IFormFile Receipt { get; set; }
+        public string Comment { get; set; }
     }
     public class Document
     {
