@@ -1,6 +1,7 @@
 ﻿using Medius.DataAccess.Data;
 using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
+using Medius.Models.Enums;
 using Medius.Utility;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -25,12 +26,12 @@ namespace Medius.DataAccess.Repository
             _env = env;
             _emailService = emailService;
         }
-        public async Task<Notification> AddAsync(Notification entity)
+        public async Task<Notification> AddAsync(Notification entity, Role role)
         {
             var emails = _db.ApplicationUsers.Select(x => x.Email).ToList();
             await _db.Notifications.AddAsync(entity);
             await _db.SaveChangesAsync();
-            sendVerificationEmail(entity);
+            sendVerificationEmail(entity, role);
             return entity;
         }
 
@@ -44,7 +45,7 @@ namespace Medius.DataAccess.Repository
             return await _db.Notifications.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id);
         }
 
-         private void sendVerificationEmail(Notification notification)
+         private void sendVerificationEmail(Notification notification, Role role)
         {
             //string message;
             string subject;
@@ -63,7 +64,7 @@ namespace Medius.DataAccess.Repository
             //content = content.Replace("{{message}}", message);
             content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
 
-            var emails = _db.Users.Select(x => x.Email).ToList();
+            var emails = _db.Users.Where(x => x.Role == role && x.Active).Select(x => x.Email).ToList();
             _emailService.SendEmailToAllAsync(emails, subject, content);
 
         }

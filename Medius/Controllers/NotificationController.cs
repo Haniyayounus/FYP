@@ -45,9 +45,9 @@ namespace Medius.Controllers
                 {
                     Title = viewModel.Title,
                     Subject = viewModel.Subject,
-                    Description = viewModel.Description
+                    Description = viewModel.Description,
                 };
-                var data = await _notificationRepository.AddAsync(notification);
+                var data = await _notificationRepository.AddAsync(notification, viewModel.Role);
                 return StatusCode(StatusCodes.Status200OK, data);
             }
             else

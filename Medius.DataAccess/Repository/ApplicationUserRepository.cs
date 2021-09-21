@@ -253,8 +253,9 @@ namespace Medius.DataAccess.Repository
         public void Delete(string id)
         {
             var account = getAccount(id);
-            _db.ApplicationUsers.Remove(account);
+            account.Active = false;
             _db.SaveChanges();
+            sendAccountDeletionEmail(id);
         }
         public async Task<AccountResponse> ArchiveUser(string id)
         {
@@ -348,6 +349,27 @@ namespace Medius.DataAccess.Repository
 
         }
 
+        private void sendAccountDeletionEmail(string id)
+        {
+            //string message;
+            string subject;
+            string path;
+            string content;
+
+            subject = "We’re sorry to see you go.";
+            path = Path.Combine(_env.WebRootPath, "DeletionEmail.html");
+            content = System.IO.File.ReadAllText(path);
+
+            var account = _db.ApplicationUsers.Find(id);
+            
+            content = content.Replace("{{Username}}", account.UserName);
+            //content = content.Replace("{{message}}", message);
+            content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
+
+
+            _emailService.SendEmailAsync(account.Email, subject, content);
+
+        }
         private void sendInviteEmail(ApplicationUser account, string origin, string password)
         {
             string message;

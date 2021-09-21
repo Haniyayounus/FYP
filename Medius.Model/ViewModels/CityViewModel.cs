@@ -77,5 +77,6 @@ namespace Medius.Model.ViewModel
         public string Title { get; set; }
         public string Subject { get; set; }
         public string Description{ get; set; }
+        public Role Role{ get; set; }
     }
 }

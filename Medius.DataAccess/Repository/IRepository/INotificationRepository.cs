@@ -1,4 +1,5 @@
 ﻿using Medius.Model;
+using Medius.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace Medius.DataAccess.Repository.IRepository
 {
     public interface INotificationRepository
     {
-        Task<Notification> AddAsync(Notification entity);
+        Task<Notification> AddAsync(Notification entity, Role role);
         Task<List<Notification>> GetAll();
         Task<Notification> GetById(int id);
     }
