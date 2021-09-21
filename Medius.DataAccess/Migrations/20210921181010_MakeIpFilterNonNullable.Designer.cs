@@ -4,14 +4,16 @@ using Medius.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Medius.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210921181010_MakeIpFilterNonNullable")]
+    partial class MakeIpFilterNonNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -144,7 +146,7 @@ namespace Medius.DataAccess.Migrations
                     b.Property<int>("CityId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ClaimId")
+                    b.Property<int>("ClaimId")
                         .HasColumnType("int");
 
                     b.Property<string>("Comment")
@@ -597,7 +599,9 @@ namespace Medius.DataAccess.Migrations
 
                     b.HasOne("Medius.Model.Claims", "Claim")
                         .WithMany()
-                        .HasForeignKey("ClaimId");
+                        .HasForeignKey("ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Medius.Model.IpFilter", "IpFilter")
                         .WithMany()

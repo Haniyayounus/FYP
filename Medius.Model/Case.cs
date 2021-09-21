@@ -16,6 +16,7 @@ namespace Medius.Model
             public CaseType Type { get; set; }
             public string Contact { get; set; }
             public string Application { get; set; }
+            public string CopyrightPlan { get; set; }
             public Status Status { get; set; }
             public string ImagePath { get; set; }
             public string DocumentPath { get; set; }
@@ -35,11 +36,11 @@ namespace Medius.Model
 
             [ForeignKey("ClaimId")]
             public Claims Claim { get; set; }
-        public int ClaimId { get; set; }
+        public int? ClaimId { get; set; }
 
         [ForeignKey("IpFilterId")]
             public IpFilter IpFilter { get; set; }
-             public int IpFilterId { get; set; }
+             public int? IpFilterId { get; set; }
 
             [ForeignKey("UserId")]
             public ApplicationUser Appl { get; set; }
