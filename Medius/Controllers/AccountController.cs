@@ -14,9 +14,7 @@ using Twilio.Rest.Api.V2010.Account;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
+using System.Linq;
 
 namespace Medius.Controllers
 {
@@ -33,6 +31,7 @@ namespace Medius.Controllers
             {
                 _unitOfWork = unitOfWork;
             _env = env;
+            _db = db;
             }
 
             [HttpPost("Login")]
@@ -88,50 +87,50 @@ namespace Medius.Controllers
             }
             }
 
-        [HttpGet("VerifyEmail")]
-        public ContentResult VerifyEmail(string token)
-        {
-            try
+            [HttpGet("VerifyEmail")]
+            public ContentResult VerifyEmail(string token)
             {
-                var account = _unitOfWork.VerifyEmail(token);
+                try
+                {
+                    var account = _unitOfWork.VerifyEmail(token);
 
-                if (account.Role == Role.SubAdmin)
-                {
-                    return base.Content("<img src='https://raw.githubusercontent.com/Haniyayounus/FYP/logo/circlecheck.png'"
-                       + "style='width: 30%; height:50%; margin-left:35%;'/><p style='text-align:center; font - size:22px;'>Congratulations!</p>"
-                       + "<p style = 'text-align: center; font-size:22px;'> You've successfully accepted the invitation.</p>"
-                       + "<div class='modal-footer'>"
-                       + "<a type='button' href='https://meet.google.com/szj-foaj-bek' style='background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; margin-left: 45%'>"
-                       + "Login Now</a><br /><br /></div>", "text/html");
+                    if (account.Role == Role.SubAdmin)
+                    {
+                        return base.Content("<img src='https://raw.githubusercontent.com/Haniyayounus/FYP/logo/circlecheck.png'"
+                           + "style='width: 30%; height:50%; margin-left:35%;'/><p style='text-align:center; font - size:22px;'>Congratulations!</p>"
+                           + "<p style = 'text-align: center; font-size:22px;'> You've successfully accepted the invitation.</p>"
+                           + "<div class='modal-footer'>"
+                           + "<a type='button' href='https://meet.google.com/szj-foaj-bek' style='background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; margin-left: 45%'>"
+                           + "Login Now</a><br /><br /></div>", "text/html");
+                    }
+                    else if (account.Role == Role.User)
+                    {
+                        return base.Content("<img src='https://raw.githubusercontent.com/Haniyayounus/FYP/logo/circlecheck.png'"
+                           + "style='width: 30%; height:50%; margin-left:35%;'/><p style='text-align:center; font - size:22px;'>Congratulations!</p>"
+                           + "<p style = 'text-align: center; font-size:22px;'> You've successfully accepted the invitation.</p>"
+                           + "<div class='modal-footer'>"
+                           +"<br /><br /></div>", "text/html");
+                    }
+                    else
+                    {
+                        return base.Content("Sorry something went wrong");
+                    }
                 }
-                else if (account.Role == Role.User)
+                catch(Exception ex)
                 {
-                    return base.Content("<img src='https://raw.githubusercontent.com/Haniyayounus/FYP/logo/circlecheck.png'"
-                       + "style='width: 30%; height:50%; margin-left:35%;'/><p style='text-align:center; font - size:22px;'>Congratulations!</p>"
-                       + "<p style = 'text-align: center; font-size:22px;'> You've successfully accepted the invitation.</p>"
-                       + "<div class='modal-footer'>"
-                       +"<br /><br /></div>", "text/html");
+                    return base.Content(ex.Message);
                 }
-                else
-                {
-                    return base.Content("Sorry something went wrong");
-                }
-            }
-            catch(Exception ex)
-            {
-                return base.Content(ex.Message);
-            }
 
-            //File("~/Images/photo.jpg", "image/jpeg");
-            //return StatusCode(StatusCodes.Status200OK, );
-        }
+                //File("~/Images/photo.jpg", "image/jpeg");
+                //return StatusCode(StatusCodes.Status200OK, );
+            }
             [HttpPost("ForgotPassword")]
             public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest model)
             {
             if (model.mode == "SMS")
             {
                 var code = StringUtility.GenerateVerificationCode(6);
-                var account = await _db.ApplicationUsers.SingleOrDefaultAsync(x => x.Email == model.Email);
+                var account = await _db.Users.SingleOrDefaultAsync(x => x.Email == model.Email);
 
                 // always return ok response to prevent email enumeration
                 if (account == null) return null;
@@ -215,7 +214,7 @@ namespace Medius.Controllers
             }
             }
 
-            [Authorize(Role.Admin)]
+            [Authorize]
             [HttpGet("GetAll")]
             public ActionResult<IEnumerable<AccountResponse>> GetAll()
             {
@@ -253,9 +252,12 @@ namespace Medius.Controllers
                 // users can delete their own account and admins can delete any account
                 if (adminId != ApplicationUser.Id && ApplicationUser.Role != Role.Admin)
                     return Unauthorized(new { message = "Unauthorized" });
-
+            var userCases = _db.Cases.Where(x => x.UserId == userId && (x.Status != Status.Publish || x.Status != Status.Reject)).ToList();
+            if (userCases != null)
+                return StatusCode(StatusCodes.Status400BadRequest, "Sorry! You can't delete the user as the user has some activecases");
+            
             _unitOfWork.Delete(userId);
-                return Ok(new { message = "Account deleted successfully" });
+            return Ok(new { message = "Account deleted successfully" });
             }
             [Authorize]
             [HttpPut("Archive")]
@@ -270,8 +272,46 @@ namespace Medius.Controllers
                 return StatusCode(StatusCodes.Status200OK, "Account archived successfully" );
             }
 
+            [HttpGet("SendOTPToUser")]
+            public ActionResult SendOTPToUser(string id)
+        {
+            try
+            {
+                var isAuthenticated = User.Identity.IsAuthenticated;
+                var code = StringUtility.GenerateVerificationCode(6);
+                var account = _db.Users.SingleOrDefault(x => x.Id == id);
 
+                // always return ok response to prevent email enumeration
+                if (account == null) return null;
+
+
+                // create reset token that expires after 1 day
+                account.OTP = code;
+                account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
+
+                _unitOfWork.UpdateOTP(id, code);
+                _db.SaveChanges();
+                //SMS Service
+                var accountSid = ("AC3b98b0e323117fe41371cf8d1225be2d");
+                var authToken = ("");
+                TwilioClient.Init(accountSid, authToken);
+
+                var message = MessageResource.Create
+                    (
+                    body: "Your medius security code is " + account.OTP,
+                    from: new Twilio.Types.PhoneNumber("+19192613534"),
+                    to: account.PhoneNumber
+                    );
+                return StatusCode(StatusCodes.Status200OK, code);
+            }
+            catch (Exception ex)
+            {
+                // Log exception code goes here
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
             //Two Factor Authentication
+
             [Authorize]
             [HttpGet]
             [Route("SendUserOtp")]
@@ -281,30 +321,28 @@ namespace Medius.Controllers
                 {
                     var isAuthenticated = User.Identity.IsAuthenticated;
                     var code = StringUtility.GenerateVerificationCode(6);
-                    var account = _unitOfWork.GetUser(id);
+                var account = _db.Users.SingleOrDefault(x => x.Id == id);
 
-                    // always return ok response to prevent email enumeration
-                    if (account == null) return null;
+                // always return ok response to prevent email enumeration
+                if (account == null) return null;
 
-                
-                    // create reset token that expires after 1 day
-                    //account.OTP = code;
-                    //account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
+
+                // create reset token that expires after 1 day
+                account.OTP = code;
+                account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
 
                 _unitOfWork.UpdateOTP(id, code);
-                    //_db.SaveChanges();
-                    // SMS Service
-                    var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
-                var authToken = ("");
-                var from = ("+14848044359");
-                    var to = account.PhoneNumber;
+                _db.SaveChanges();
+                //SMS Service
+                var accountSid = ("AC3b98b0e323117fe41371cf8d1225be2d");
+                var authToken = ("2df9943a45837f30b4d33a31ea97009f");
                     TwilioClient.Init(accountSid, authToken);
 
                     var message = await MessageResource.CreateAsync
                         (
-                        to: to,
-                        from: from,
-                        body: "Your medius security code is " + account.OTP
+                        body: "Your medius security code is " + account.OTP,
+                        from: new Twilio.Types.PhoneNumber("+19192613534"),
+                        to: account.PhoneNumber
                         );
                     return StatusCode(StatusCodes.Status200OK, code);
                 }

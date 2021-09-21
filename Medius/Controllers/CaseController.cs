@@ -4,6 +4,7 @@ using Medius.Models.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Medius.Controllers
@@ -134,7 +135,7 @@ namespace Medius.Controllers
 
         [HttpPost]
         [Route("Add")]
-        public async Task<IActionResult> Add(CaseViewModel viewModel)
+        public async Task<IActionResult> Add([FromForm]CaseViewModel viewModel)
         {
             try
             {
