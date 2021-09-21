@@ -292,7 +292,7 @@ namespace Medius.Controllers
                 _unitOfWork.UpdateOTP(id, code);
                 _db.SaveChanges();
                 //SMS Service
-                var accountSid = ("AC3b98b0e323117fe41371cf8d1225be2d");
+                var accountSid = ("");
                 var authToken = ("");
                 TwilioClient.Init(accountSid, authToken);
 
@@ -332,10 +332,13 @@ namespace Medius.Controllers
                 account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
 
                 _unitOfWork.UpdateOTP(id, code);
-                _db.SaveChanges();
-                //SMS Service
-                var accountSid = ("");
-                var authToken = ("");
+                    //_db.SaveChanges();
+                    // SMS Service
+                    var accountSid = ("");
+                    var authToken = ("");
+                    var from = ("+14848044359");
+                    var to = account.PhoneNumber;
+
                     TwilioClient.Init(accountSid, authToken);
 
                     var message = await MessageResource.CreateAsync
