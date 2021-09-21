@@ -143,7 +143,7 @@ namespace Medius.Controllers
                 _db.ApplicationUsers.Update(account);
                 _db.SaveChanges();
                 // SMS Service
-                var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
+                var accountSid = ("");
                 var authToken = ("");
                 var from = ("+14848044359");
                 var to = account.PhoneNumber;
@@ -294,7 +294,7 @@ namespace Medius.Controllers
                 _unitOfWork.UpdateOTP(id, code);
                     //_db.SaveChanges();
                     // SMS Service
-                    var accountSid = ("ACe7643b8eb95e15efa182bffdfca15d15");
+                    var accountSid = ("");
                     var authToken = ("");
                     var from = ("+14848044359");
                     var to = account.PhoneNumber;
