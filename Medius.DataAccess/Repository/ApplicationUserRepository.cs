@@ -436,7 +436,7 @@ namespace Medius.DataAccess.Repository
             string content = System.IO.File.ReadAllText(path);
            
                 message = $@"<p>A request has been received to change the password for your Medius account, the code will be valid for 1 day:</p>";
-                content = content.Replace("{{uerName}}", account.UserName);
+                content = content.Replace("{{userName}}", account.UserName);
                 content = content.Replace("{{resetToken}}", account.ResetToken);
                 content = content.Replace("{{message}}", message);
                 content = content.Replace("{{currentYear}}", DateTime.Now.Year.ToString());
