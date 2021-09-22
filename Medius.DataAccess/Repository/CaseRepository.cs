@@ -52,16 +52,18 @@ namespace Medius.DataAccess.Repository
             if (await IsCaseDuplicate(viewModel.Title)) throw new Exception($"'{viewModel.Title}' already exists. Please choose a different name.");
 
             //image upload
-            if(viewModel.Image != null)
+            var image = "";
+            if (viewModel.Image != null)
             {
-                var image = await CaseImages(viewModel.UserId, viewModel.Type, viewModel.Image);
+                image = await CaseImages(viewModel.UserId, viewModel.Type, viewModel.Image);
                 if (image == null) throw new Exception($"Image is required.");
             }
 
             //document upload
+            var document = "";
             if(viewModel.Document != null)
             {
-                var document = await CaseDocuments(viewModel.UserId, viewModel.Type, viewModel.Document);
+                document = await CaseDocuments(viewModel.UserId, viewModel.Type, viewModel.Document);
                 if (document == null) throw new Exception($"File is required.");
             }
             
