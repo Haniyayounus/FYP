@@ -26,18 +26,22 @@ namespace Medius.DataAccess.Repository
             _env = env;
             _emailService = emailService;
         }
-        public async Task<Notification> AddAsync(Notification entity, Role role)
+        public async Task<Notification> AddAsync(Notification entity)
         {
             var emails = _db.ApplicationUsers.Select(x => x.Email).ToList();
             await _db.Notifications.AddAsync(entity);
             await _db.SaveChangesAsync();
-            sendVerificationEmail(entity, role);
+            sendVerificationEmail(entity, entity.UserType);
             return entity;
         }
 
         public async Task<List<Notification>> GetAll()
         {
             return await _db.Notifications.AsNoTracking().ToListAsync();
+        }
+        public async Task<List<Notification>> GetNotificationForUser()
+        {
+            return await _db.Notifications.Where(x => x.UserType == Role.User).AsNoTracking().ToListAsync();
         }
 
         public async Task<Notification> GetById(int id)

@@ -1,4 +1,5 @@
-﻿using Medius.DataAccess.Repository.IRepository;
+﻿using Medius.DataAccess.Data;
+using Medius.DataAccess.Repository.IRepository;
 using Medius.Model;
 using Medius.Model.ViewModel;
 using Microsoft.AspNetCore.Http;
@@ -13,9 +14,11 @@ namespace Medius.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly INotificationRepository _notificationRepository;
-        public NotificationController(INotificationRepository notificationRepository)
+        private readonly ApplicationDbContext _db;
+        public NotificationController(INotificationRepository notificationRepository, ApplicationDbContext db)
         {
             _notificationRepository = notificationRepository;
+            _db = db;
         }
         [HttpGet]
         [Route("GetAll")]
@@ -46,14 +49,25 @@ namespace Medius.Controllers
                     Title = viewModel.Title,
                     Subject = viewModel.Subject,
                     Description = viewModel.Description,
+                    UserType = viewModel.Role,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now,
+                    LastModify = DateTime.Now
                 };
-                var data = await _notificationRepository.AddAsync(notification, viewModel.Role);
+                var data = await _notificationRepository.AddAsync(notification);
                 return StatusCode(StatusCodes.Status200OK, data);
             }
             else
             {
                 return StatusCode(StatusCodes.Status404NotFound);
             }
+        }
+        [HttpGet]
+        [Route("GetNotificationForUser")]
+        public async Task<IActionResult> GetNotificationForUser()
+        {
+            var obj = await _notificationRepository.GetNotificationForUser();
+            return Ok(obj);
         }
     }
 }

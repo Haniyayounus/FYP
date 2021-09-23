@@ -161,10 +161,7 @@ namespace Medius.Controllers
                 // Email Service
 
                 var resetToken =_unitOfWork.ForgotPassword(model, Request.Headers["origin"]);
-                var blob = new JObject(
-                    new JProperty("VerificationCode", resetToken)
-                    );
-                return StatusCode(StatusCodes.Status205ResetContent, blob);
+                return StatusCode(StatusCodes.Status200OK, resetToken);
                 //return Ok(new { message = "Please check your email for password reset instructions" });
             }
         }
@@ -272,44 +269,6 @@ namespace Medius.Controllers
                 return StatusCode(StatusCodes.Status200OK, "Account archived successfully" );
             }
 
-            [HttpGet("SendOTPToUser")]
-            public ActionResult SendOTPToUser(string id)
-        {
-            try
-            {
-                var isAuthenticated = User.Identity.IsAuthenticated;
-                var code = StringUtility.GenerateVerificationCode(6);
-                var account = _db.Users.SingleOrDefault(x => x.Id == id);
-
-                // always return ok response to prevent email enumeration
-                if (account == null) return null;
-
-
-                // create reset token that expires after 1 day
-                account.OTP = code;
-                account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
-
-                _unitOfWork.UpdateOTP(id, code);
-                _db.SaveChanges();
-                //SMS Service
-                var accountSid = ("");
-                var authToken = ("");
-                TwilioClient.Init(accountSid, authToken);
-
-                var message = MessageResource.Create
-                    (
-                    body: "Your medius security code is " + account.OTP,
-                    from: new Twilio.Types.PhoneNumber("+19192613534"),
-                    to: account.PhoneNumber
-                    );
-                return StatusCode(StatusCodes.Status200OK, code);
-            }
-            catch (Exception ex)
-            {
-                // Log exception code goes here
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
-        }
             //Two Factor Authentication
 
             [Authorize]
@@ -332,12 +291,12 @@ namespace Medius.Controllers
                 account.ResetTokenExpires = DateTime.UtcNow.AddMinutes(15);
 
                 _unitOfWork.UpdateOTP(id, code);
-                    //_db.SaveChanges();
-                    // SMS Service
-                    var accountSid = ("");
-                    var authToken = ("");
-                    var from = ("+14848044359");
-                    var to = account.PhoneNumber;
+                //_db.SaveChanges();
+                // SMS Service
+                var accountSid = ("");
+                var authToken = ("");
+
+                var to = account.PhoneNumber;
 
                     TwilioClient.Init(accountSid, authToken);
 
