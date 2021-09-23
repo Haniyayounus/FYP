@@ -13,5 +13,6 @@ namespace Medius.DataAccess.Repository.IRepository
         Task<Notification> AddAsync(Notification entity, Role role);
         Task<List<Notification>> GetAll();
         Task<Notification> GetById(int id);
+        Task<List<Notification>> GetNotificationForUser();
     }
 }
